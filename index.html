@@ -1,1102 +1,1789 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PNG編集アプリ</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --container-bg: #fff;
-            --card-bg: #f5f5f5;
-            --text: #333;
-            --text-sub: #666;
-            --text-muted: #888;
-            --border: #ddd;
-            --sidebar-bg: #f0f0f0;
-            --item-bg: #fff;
-            --item-hover: #e8e8e8;
-            --input-bg: #fff;
-            --drop-bg: #f8f9ff;
-            --drop-hover: #eef1ff;
-            --accent: #667eea;
-            --accent-hover: #5a6fd6;
-        }
-        .dark {
-            --bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --container-bg: #1e1e2e;
-            --card-bg: #2a2a3e;
-            --text: #e0e0e0;
-            --text-sub: #aaa;
-            --text-muted: #777;
-            --border: #444;
-            --sidebar-bg: #252535;
-            --item-bg: #2a2a3e;
-            --item-hover: #3a3a4e;
-            --input-bg: #2a2a3e;
-            --drop-bg: #252535;
-            --drop-hover: #2a2a3e;
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); min-height: 100vh; padding: 20px; }
-        .app { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .main { flex: 1; min-width: 0; overflow: hidden; background: var(--container-bg); border-radius: 16px; padding: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .sidebar { width: 280px; background: var(--sidebar-bg); border-radius: 16px; padding: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
-        .hidden { display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { color: var(--text); font-size: 24px; }
-        .theme-btn { background: var(--card-bg); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; color: var(--text); }
-        .theme-btn:hover { transform: scale(1.1); }
-        .help-btn { background: var(--card-bg); border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text); font-weight: 600; }
-        .help-btn:hover { background: var(--accent); color: #fff; }
-        .help-panel { position: fixed; top: 0; right: 0; width: 360px; height: 100vh; background: var(--container-bg); box-shadow: -5px 0 30px rgba(0,0,0,0.3); z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto; }
-        .help-panel.show { transform: translateX(0); }
-        .help-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--container-bg); z-index: 1; }
-        .help-panel-header h2 { color: var(--text); font-size: 16px; display: flex; align-items: center; gap: 8px; margin: 0; }
-        .help-panel .close-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; border-radius: 4px; }
-        .help-panel .close-btn:hover { background: var(--card-bg); color: var(--text); }
-        .help-panel-content { padding: 20px; }
-        .help-section { margin-bottom: 20px; }
-        .help-section h3 { color: var(--accent); font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .help-section ul { list-style: none; padding-left: 0; margin: 0; }
-        .help-section li { color: var(--text-sub); font-size: 12px; padding: 5px 0; padding-left: 16px; position: relative; line-height: 1.5; }
-        .help-section li::before { content: '•'; position: absolute; left: 4px; color: var(--accent); }
-        .help-section li b { color: var(--text); }
-        .icon { font-family: 'Material Symbols Rounded'; font-size: 20px; vertical-align: middle; }
-        .icon-sm { font-size: 16px; }
-        .icon-lg { font-size: 24px; }
-        .drop { border: 3px dashed var(--accent); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; background: var(--drop-bg); margin-bottom: 20px; }
-        .drop:hover, .drop.dragover { background: var(--drop-hover); border-color: #764ba2; }
-        .drop p { color: var(--text-sub); font-size: 16px; }
-        .drop input { display: none; }
-        .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .card { background: var(--card-bg); border-radius: 10px; padding: 12px; position: relative; padding-bottom: 45px; }
-        .card .btn-apply { position: absolute; bottom: 10px; right: 10px; }
-        .card h4 { margin-bottom: 8px; color: var(--text); font-size: 14px; }
-        .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-        .row label { font-size: 12px; color: var(--text-sub); }
-        .row span { color: var(--text-sub); }
-        .tol-row { display: flex; align-items: center; gap: 6px; width: 100%; }
-        .tol-row label { flex-shrink: 0; font-size: 11px; color: var(--text-sub); min-width: 32px; }
-        .tol-row input[type="range"] { flex: 1; min-width: 60px; }
-        .tol-row .val { min-width: 28px; text-align: right; font-size: 11px; color: var(--text-sub); flex-shrink: 0; }
-        input[type="range"] { height: 5px; border-radius: 3px; background: var(--border); -webkit-appearance: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
-        input[type="color"] { width: 32px; height: 26px; border: none; border-radius: 5px; cursor: pointer; }
-        input[type="number"] { width: 65px; padding: 5px 7px; border: 2px solid var(--border); border-radius: 5px; font-size: 12px; background: var(--input-bg); color: var(--text); }
-        input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
-        .canvas-area { display: block; margin-bottom: 15px; }
-        .canvas-wrap { text-align: center; }
-        .canvas-wrap.full { width: 100%; }
-        .orig-section { margin-bottom: 15px; }
-        .orig-section.hidden { display: none; }
-        .toggle-orig { padding: 6px 14px; font-size: 12px; background: var(--card-bg); color: var(--text); border: 2px solid transparent; border-radius: 7px; cursor: pointer; margin-bottom: 10px; }
-        .toggle-orig.active { border-color: var(--accent); background: var(--accent); color: #fff; }
-        .canvas-wrap h3 { margin-bottom: 8px; color: var(--text); font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .canvas-container { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 14px 14px; height: 450px; width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: center; }
-        .canvas-container canvas { display: block; transform-origin: center center; }
-        .canvas-container.hand { cursor: grab; }
-        .canvas-container.hand:active { cursor: grabbing; }
-        .lasso-clear { position: absolute; bottom: 10px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(255, 153, 0, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
-        .lasso-clear:hover { background: rgba(255, 120, 0, 1); }
-        .crop-confirm { position: absolute; bottom: 50px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(255, 68, 68, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
-        .crop-confirm:hover { background: rgba(220, 50, 50, 1); }
-        .lasso-confirm { position: absolute; bottom: 90px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(0, 204, 102, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
-        .lasso-confirm:hover { background: rgba(0, 180, 90, 1); }
-        .zoom-row { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 6px; }
-        .zoom-row input[type="range"] { width: 60px; }
-        .zoom-row span { font-size: 11px; color: var(--text-sub); min-width: 40px; }
-        .zoom-row button { padding: 2px 6px; font-size: 11px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text); }
-        .zoom-row button:hover { background: var(--item-hover); }
-        #workCvs.pick { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23667eea' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%23667eea'/%3E%3C/svg%3E") 12 12, crosshair; }
-        #workCvs.crop, #workCvs.select, #workCvs.lasso { cursor: crosshair; }
-        .info { text-align: center; color: var(--text-muted); font-size: 11px; margin-bottom: 10px; }
-        .mode-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
-        .mode-btn { padding: 6px 14px; font-size: 12px; background: var(--card-bg); color: var(--text); border: 2px solid transparent; border-radius: 7px; cursor: pointer; }
-        .mode-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
-        .btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { padding: 9px 18px; font-size: 13px; border: none; border-radius: 7px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-apply { background: var(--accent); color: #fff; }
-        .btn-apply:hover { background: var(--accent-hover); }
-        .btn-reset { background: var(--card-bg); color: var(--text); }
-        .btn-dl { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; }
-        .btn-dl:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(17,153,142,0.4); }
-        .sidebar h4 { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-        .history { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; }
-        .history-item { display: flex; align-items: center; gap: 8px; background: var(--item-bg); padding: 8px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--text); }
-        .history-item:hover { background: var(--item-hover); }
-        .history-item.active { background: var(--accent); color: #fff; }
-        .history-item.active .detail, .history-item.active .del { color: rgba(255,255,255,0.8); }
-        .num { font-weight: bold; min-width: 18px; }
-        .info-wrap { flex: 1; min-width: 0; }
-        .label { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .detail { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-        .del { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 3px 6px; border-radius: 4px; font-size: 12px; }
-        .del:hover { background: #ff5252; color: #fff; }
-        .del:disabled { opacity: 0.3; cursor: not-allowed; }
-        @media (max-width: 900px) {
-            .app { flex-direction: column; }
-            .sidebar { width: 100%; max-height: 200px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PNG透過エディター</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+  <style>
+    /* ===== Reset & Variables ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --surface-hover: #f1f5f9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --accent-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
+      --shadow-xl: 0 25px 60px rgba(0,0,0,0.25);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .dark {
+      --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
+      --surface: #1e1e2e;
+      --surface-alt: #262637;
+      --surface-hover: #2e2e42;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #334155;
+      --accent: #818cf8;
+      --accent-light: #a5b4fc;
+      --accent-dark: #6366f1;
+    }
+
+    /* ===== Base ===== */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      padding: 24px;
+      color: var(--text-primary);
+    }
+
+    /* ===== Layout ===== */
+    .app {
+      display: flex;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .main {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .sidebar {
+      width: 300px;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      max-height: calc(100vh - 48px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .hidden { display: none !important; }
+
+    /* ===== Header ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ===== Icons ===== */
+    .icon {
+      font-family: 'Material Symbols Rounded';
+      font-size: 20px;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .icon-sm { font-size: 18px; }
+    .icon-lg { font-size: 24px; }
+
+    /* ===== Buttons ===== */
+    button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+    }
+    .btn-icon:hover {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.05);
+    }
+    
+    .btn-primary {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-success {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+    
+    .btn-secondary {
+      padding: 10px 20px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+    }
+    
+    .btn-ghost {
+      padding: 8px 16px;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover {
+      background: var(--surface-alt);
+      color: var(--text-primary);
+    }
+    
+    .btn-gradient {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      color: white;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+    }
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    }
+
+    /* ===== Drop Zone ===== */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface-alt);
+      transition: all var(--transition);
+      margin-bottom: 24px;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(168,85,247,0.05));
+    }
+    .dropzone .icon {
+      font-size: 48px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: block;
+    }
+    .dropzone p {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    .dropzone input { display: none; }
+
+    /* ===== Tool Cards ===== */
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .card {
+      background: var(--surface-alt);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      position: relative;
+      border: 1px solid var(--border);
+      transition: all var(--transition);
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .card-header .icon {
+      color: var(--accent);
+    }
+    
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .card-footer {
+      margin-top: 14px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* ===== Form Controls ===== */
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .form-row label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-width: 45px;
+    }
+    
+    input[type="color"] {
+      width: 36px;
+      height: 30px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      padding: 2px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+    }
+    
+    input[type="number"] {
+      width: 70px;
+      padding: 8px 10px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color var(--transition);
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .range-value {
+      min-width: 32px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ===== Mode Buttons ===== */
+    .mode-toolbar {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    .mode-btn {
+      padding: 8px 16px;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+    }
+    .mode-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      border-color: transparent;
+    }
+
+    /* ===== Canvas Area ===== */
+    .canvas-section {
+      margin-bottom: 20px;
+    }
+    
+    .canvas-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .canvas-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .canvas-container {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: repeating-conic-gradient(var(--surface-alt) 0% 25%, var(--surface) 0% 50%) 50% / 16px 16px;
+      height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .canvas-container canvas {
+      display: block;
+      transform-origin: center center;
+    }
+    .canvas-container.hand { cursor: grab; }
+    .canvas-container.hand:active { cursor: grabbing; }
+    
+    .canvas-container svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* ===== Canvas Overlay Buttons ===== */
+    .canvas-btn {
+      position: absolute;
+      right: 12px;
+      padding: 8px 14px;
+      font-size: 12px;
+      border-radius: var(--radius-md);
+      z-index: 10;
+      display: none;
+      backdrop-filter: blur(8px);
+    }
+    .canvas-btn.crop-confirm {
+      bottom: 56px;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+    .canvas-btn.lasso-confirm {
+      bottom: 100px;
+      background: rgba(16, 185, 129, 0.9);
+      color: white;
+    }
+    .canvas-btn.lasso-clear {
+      bottom: 12px;
+      background: rgba(245, 158, 11, 0.9);
+      color: white;
+    }
+    .canvas-btn:hover { transform: scale(1.05); }
+    /* ===== Color Picker Loupe ===== */
+    .picker-loupe {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.1);
+      pointer-events: none;
+      z-index: 100;
+      overflow: hidden;
+      display: none;
+      background: var(--surface);
+    }
+    .picker-loupe canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+    .picker-loupe::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+      border: 2px solid rgba(0,0,0,0.8);
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.8);
+    }
+    .picker-info {
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .picker-info .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    /* ===== Zoom Controls ===== */
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px;
+      background: var(--surface-alt);
+      border-radius: var(--radius-md);
+    }
+    .zoom-controls input[type="range"] { width: 80px; }
+    .zoom-controls span { font-size: 12px; color: var(--text-secondary); }
+    .zoom-controls button {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .zoom-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Toggle Original ===== */
+    .toggle-section {
+      margin-bottom: 16px;
+    }
+    .toggle-btn {
+      padding: 8px 16px;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      border: 2px solid transparent;
+    }
+    .toggle-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar-section {
+      background: var(--surface-alt);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      border: 1px solid var(--border);
+    }
+    
+    .sidebar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ===== History ===== */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 200px;
+    }
+    
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      border: 1px solid transparent;
+    }
+    .history-item:hover {
+      background: var(--surface-hover);
+      border-color: var(--border);
+    }
+    .history-item.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      border-color: transparent;
+    }
+    .history-item.active .history-detail,
+    .history-item.active .history-del { color: rgba(255,255,255,0.8); }
+    
+    .history-num {
+      font-weight: 700;
+      font-size: 12px;
+      min-width: 20px;
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-label {
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-detail {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .history-del {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .history-del:hover { background: var(--danger); color: white; }
+    .history-del:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ===== Help Panel ===== */
+    .help-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 380px;
+      height: 100vh;
+      background: var(--surface);
+      box-shadow: -8px 0 30px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+    }
+    .help-panel.show { transform: translateX(0); }
+    
+    .help-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+    .help-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .help-content { padding: 24px; }
+    
+    .help-section {
+      margin-bottom: 24px;
+    }
+    .help-section h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .help-section ul {
+      list-style: none;
+    }
+    .help-section li {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 6px 0 6px 18px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .help-section li::before {
+      content: '•';
+      position: absolute;
+      left: 4px;
+      color: var(--accent);
+    }
+    .help-section li b { color: var(--text-primary); }
+
+    /* ===== Cursors ===== */
+    #workCvs.pick { cursor: crosshair; }
+    #workCvs.crop, #workCvs.select, #workCvs.lasso, #workCvs.magic { cursor: crosshair; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 960px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; max-height: 280px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="app">
-        <div class="main">
-            <div class="header">
-                <h1><span class="icon icon-lg">image</span> PNG編集アプリ</h1>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="help-btn" id="helpBtn" title="使い方"><span class="icon icon-sm">info</span> 使い方</button>
-                    <button class="theme-btn" id="theme" title="ダークモード切替"><span class="icon" id="themeIcon">dark_mode</span></button>
-                </div>
-            </div>
-            <div class="drop" id="drop">
-                <p><span class="icon">folder_open</span> 画像をドラッグ＆ドロップ / クリック / Ctrl+V</p>
-                <input type="file" id="file" accept="image/*">
-            </div>
-            <div class="hidden" id="editor">
-                <div class="tools">
-                    <div class="card">
-                        <h4><span class="icon icon-sm">blur_on</span> 透過</h4>
-                        <div class="row"><label>色</label><input type="color" id="tColor" value="#ffffff"></div>
-                        <div class="tol-row"><label>許容値</label><input type="range" id="tTol" min="0" max="255" value="30"><span class="val" id="tTolV">30</span></div>
-                        <div class="row"><input type="checkbox" id="tAll"><label>選択範囲全体を透過</label></div>
-                        <button class="btn-apply" id="applyT">適用</button>
-                    </div>
-                    <div class="card">
-                        <h4><span class="icon icon-sm">palette</span> 色置換</h4>
-                        <div class="row"><input type="color" id="rFrom" value="#000000"><span>→</span><input type="color" id="rTo" value="#ff0000"></div>
-                        <div class="tol-row"><label>許容値</label><input type="range" id="rTol" min="0" max="255" value="30"><span class="val" id="rTolV">30</span></div>
-                        <button class="btn-apply" id="applyR">適用</button>
-                    </div>
-                    <div class="card">
-                        <h4><span class="icon icon-sm">format_color_fill</span> 塗りつぶし</h4>
-                        <div class="row"><label>色</label><input type="color" id="fColor" value="#ff0000"></div>
-                        <div class="row"><input type="checkbox" id="fOnly"><label>透明部分のみ</label></div>
-                        <button class="btn-apply" id="applyF">適用</button>
-                    </div>
-                    
-                </div>
-                <div class="canvas-area">
-                    <div class="canvas-wrap full">
-                        <h3><span class="icon icon-sm">edit</span> 編集キャンバス</h3>
-                        <div class="mode-btns">
-                            <button class="mode-btn active" id="modePick"><span class="icon icon-sm">colorize</span> カラーピッカー</button>
-                            <button class="mode-btn" id="modeCrop"><span class="icon icon-sm">crop</span> トリミング</button>
-                            <button class="mode-btn" id="modeSelect"><span class="icon icon-sm">select_all</span> 矩形選択</button>
-                            <button class="mode-btn" id="modeLasso"><span class="icon icon-sm">gesture</span> 投げ縄</button>
-                            
-                            <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
-                        </div>
-                        <p class="info" id="modeInfo"><span class="icon icon-sm">lightbulb</span> クリックで色を取得</p>
-                        <div class="canvas-container" id="workContainer"><canvas id="workCvs"></canvas><svg id="selectionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></svg><button class="crop-confirm" id="cropConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-confirm" id="lassoConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button></div>
-                        <div class="zoom-row">
-                            <span class="icon icon-sm">zoom_out</span>
-                            <input type="range" id="workZoom" min="10" max="400" value="100">
-                            <span class="icon icon-sm">zoom_in</span>
-                            <span id="workZoomVal">100%</span>
-                            <button id="workFit">フィット</button>
-                            <span style="font-size:10px;color:var(--text-muted)">スクロールでズーム</span>
-                        </div>
-                        
-                    </div>
-                </div>
-                <button class="toggle-orig" id="toggleOrig"><span class="icon icon-sm">photo_library</span> 元画像を表示</button>
-                <div class="orig-section hidden" id="origSection">
-                    <div class="canvas-wrap">
-                        <h3><span class="icon icon-sm">photo_library</span> 元画像（固定）</h3>
-                        <div class="canvas-container" id="origContainer"><canvas id="origCvs"></canvas></div>
-                        <div class="zoom-row">
-                            <span class="icon icon-sm">zoom_out</span>
-                            <input type="range" id="origZoom" min="10" max="400" value="100">
-                            <span class="icon icon-sm">zoom_in</span>
-                            <span id="origZoomVal">100%</span>
-                            <button id="origFit">フィット</button>
-                            <span style="font-size:10px;color:var(--text-muted)">スクロールでズーム</span>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
+  <div class="app">
+    <!-- Main Panel -->
+    <div class="main">
+      <header class="header">
+        <h1><span class="icon icon-lg">image</span>PNG透過エディター</h1>
+        <div class="header-actions">
+          <button class="btn-ghost" id="clearBtn" style="display:none"><span class="icon icon-sm">restart_alt</span> クリア</button>
+          <button class="btn-icon" id="helpBtn" title="使い方"><span class="icon">help</span></button>
+          <button class="btn-icon" id="themeBtn" title="テーマ切替"><span class="icon" id="themeIcon">dark_mode</span></button>
         </div>
-        <div class="sidebar hidden" id="sidebar">
-            <div style="margin-bottom: 12px;">
-                <button class="btn-dl" id="dl" style="width: 100%;"><span class="icon icon-sm">download</span> PNGダウンロード</button>
+      </header>
+
+      <!-- Drop Zone -->
+      <div class="dropzone" id="dropzone">
+        <span class="icon">add_photo_alternate</span>
+        <p>画像をドラッグ＆ドロップ / クリック / Ctrl+V</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <!-- Editor -->
+      <div class="hidden" id="editor">
+        <!-- Tools -->
+        <div class="tools">
+          <div class="card">
+            <div class="card-header"><span class="icon icon-sm">blur_on</span>透過</div>
+            <div class="card-body">
+              <div class="form-row">
+                <label>色</label>
+                <input type="color" id="tColor" value="#ffffff">
+              </div>
+              <div class="form-row">
+                <label>許容値</label>
+                <input type="range" id="tTol" min="0" max="255" value="30">
+                <span class="range-value" id="tTolVal">30</span>
+              </div>
+              <div class="form-row">
+                <input type="checkbox" id="tAll">
+                <label style="min-width:auto">選択範囲全体を透過</label>
+              </div>
             </div>
-            <div style="margin-bottom: 12px;">
-                <button class="btn-copy" id="copy" style="width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;"><span class="icon icon-sm">content_copy</span> クリップボードにコピー</button>
+            <div class="card-footer">
+              <button class="btn-primary" id="applyT">適用</button>
             </div>
-            <div class="card" style="margin-bottom: 12px;">
-                <h4><span class="icon icon-sm">straighten</span> 出力サイズ</h4>
-                <div class="row"><input type="number" id="outW" min="1" max="4096"><span>×</span><input type="number" id="outH" min="1" max="4096" readonly></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="icon icon-sm">palette</span>色置換</div>
+            <div class="card-body">
+              <div class="form-row">
+                <input type="color" id="rFrom" value="#000000">
+                <span class="icon icon-sm" style="color:var(--text-muted)">arrow_forward</span>
+                <input type="color" id="rTo" value="#ff0000">
+              </div>
+              <div class="form-row">
+                <label>許容値</label>
+                <input type="range" id="rTol" min="0" max="255" value="30">
+                <span class="range-value" id="rTolVal">30</span>
+              </div>
             </div>
-            <h4><span class="icon icon-sm">history</span> 編集履歴</h4>
-            <div class="history" id="hist"></div>
-            <button class="btn-reset" id="reset" style="width: 100%; margin-top: 10px; background: var(--item-hover); color: var(--text); border: 1px solid var(--border);"><span class="icon icon-sm">refresh</span> リセット</button>
+            <div class="card-footer">
+              <button class="btn-primary" id="applyR">適用</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="icon icon-sm">format_color_fill</span>塗りつぶし</div>
+            <div class="card-body">
+              <div class="form-row">
+                <label>色</label>
+                <input type="color" id="fColor" value="#ff0000">
+              </div>
+              <div class="form-row">
+                <input type="checkbox" id="fOnly">
+                <label style="min-width:auto">透明部分のみ</label>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn-primary" id="applyF">適用</button>
+            </div>
+          </div>
         </div>
+
+        <!-- Canvas Section -->
+        <div class="canvas-section">
+          <div class="canvas-title"><span class="icon icon-sm">edit</span>編集キャンバス</div>
+          
+          <div class="mode-toolbar">
+            <button class="mode-btn active" id="modePick"><span class="icon icon-sm">colorize</span> ピッカー</button>
+            <button class="mode-btn" id="modeCrop"><span class="icon icon-sm">crop</span> トリミング</button>
+            <button class="mode-btn" id="modeSelect"><span class="icon icon-sm">select_all</span> 矩形選択</button>
+            <button class="mode-btn" id="modeLasso"><span class="icon icon-sm">gesture</span> 投げ縄</button>
+            <button class="mode-btn" id="modeMagic"><span class="icon icon-sm">auto_fix_high</span> 自動選択</button>
+            <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
+          </div>
+          
+          <div class="canvas-hint" id="modeHint"><span class="icon icon-sm">lightbulb</span>クリックで色を取得</div>
+          
+          <div class="canvas-container" id="workContainer">
+            <canvas id="workCvs"></canvas>
+            <svg id="overlay"></svg>
+            <button class="canvas-btn crop-confirm" id="cropConfirm"><span class="icon icon-sm">check</span> 確定</button>
+            <button class="canvas-btn lasso-confirm" id="lassoConfirm"><span class="icon icon-sm">check</span> 確定</button>
+            <button class="canvas-btn lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button>
+          </div>
+          <!-- Color Picker Loupe -->
+          <div class="picker-loupe" id="pickerLoupe">
+            <canvas id="loupeCvs" width="60" height="60"></canvas>
+            <div class="picker-info">
+              <div class="swatch" id="loupeSwatch"></div>
+              <span id="loupeHex">#000000</span>
+            </div>
+          </div>
+          
+          <div class="zoom-controls">
+            <span class="icon icon-sm">zoom_out</span>
+            <input type="range" id="workZoom" min="10" max="400" value="100">
+            <span class="icon icon-sm">zoom_in</span>
+            <span id="workZoomVal">100%</span>
+            <button id="workFit">フィット</button>
+            <span class="zoom-hint">スクロールでズーム</span>
+          </div>
+        </div>
+
+        <!-- Original Image Toggle -->
+        <div class="toggle-section">
+          <button class="toggle-btn" id="toggleOrig"><span class="icon icon-sm">photo_library</span> 元画像を表示</button>
+        </div>
+        
+        <div class="canvas-section hidden" id="origSection">
+          <div class="canvas-title"><span class="icon icon-sm">photo_library</span>元画像（参照用）</div>
+          <div class="canvas-container hand" id="origContainer">
+            <canvas id="origCvs"></canvas>
+          </div>
+          <div class="zoom-controls">
+            <span class="icon icon-sm">zoom_out</span>
+            <input type="range" id="origZoom" min="10" max="400" value="100">
+            <span class="icon icon-sm">zoom_in</span>
+            <span id="origZoomVal">100%</span>
+            <button id="origFit">フィット</button>
+            <span class="zoom-hint">スクロールでズーム</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="help-panel" id="helpPanel">
-        <div class="help-panel-header">
-            <h2><span class="icon icon-sm">help</span> 使い方</h2>
-            <button class="close-btn" id="closeHelp"><span class="icon">close</span></button>
+
+    <!-- Sidebar -->
+    <div class="sidebar hidden" id="sidebar">
+      <button class="btn-success" id="downloadBtn" style="width:100%">
+        <span class="icon icon-sm">download</span>PNGダウンロード
+      </button>
+      
+      <button class="btn-gradient" id="copyBtn" style="width:100%">
+        <span class="icon icon-sm">content_copy</span>クリップボードにコピー
+      </button>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title"><span class="icon icon-sm">straighten</span>出力サイズ</div>
+        <div class="form-row">
+          <input type="number" id="outW" min="1" max="4096">
+          <span style="color:var(--text-muted)">×</span>
+          <input type="number" id="outH" min="1" max="4096" readonly>
         </div>
-        <div class="help-panel-content">
-            <div class="help-section">
-                <h3><span class="icon icon-sm">upload_file</span> 画像の読み込み</h3>
-                <ul>
-                    <li>ドロップゾーンに画像をドラッグ＆ドロップ</li>
-                    <li>クリックしてファイルを選択</li>
-                    <li>Ctrl+V でクリップボードから貼り付け</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">mouse</span> キャンバス操作モード</h3>
-                <ul>
-                    <li><b>カラーピッカー</b>: クリックした位置の色を取得</li>
-                    <li><b>トリミング</b>: ドラッグで範囲を切り抜き（Shift: 正方形）</li>
-                    <li><b>矩形選択</b>: ドラッグで編集範囲を限定</li>
-                    <li><b>投げ縄</b>: クリックで頂点追加、3点以上で自動確定</li>
-                    <li><b>ハンド</b>: ドラッグで画像を移動</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">edit</span> 編集ツール</h3>
-                <ul>
-                    <li><b>透過</b>: 指定した色を透明に（許容値で範囲調整）</li>
-                    <li><b>色置換</b>: 色Aを色Bに置き換え</li>
-                    <li><b>塗りつぶし</b>: 透明部分または不透明部分を塗りつぶし</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">zoom_in</span> ズーム操作</h3>
-                <ul>
-                    <li>スライダーでズーム調整（10%〜400%）</li>
-                    <li>マウスホイールでカーソル位置を中心にズーム</li>
-                    <li>「フィット」ボタンで画面に合わせる</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">history</span> 履歴機能</h3>
-                <ul>
-                    <li>編集操作は自動で履歴に保存</li>
-                    <li>履歴をクリックで過去の状態に戻る</li>
-                    <li>✕ボタンで履歴を削除（元画像以外）</li>
-                    <li><b>Ctrl+Z</b>: 元に戻す（Undo）</li>
-                    <li><b>Ctrl+Shift+Z</b> / <b>Ctrl+Y</b>: やり直し（Redo）</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">select_all</span> 選択範囲</h3>
-                <ul>
-                    <li><b>矩形選択</b>: ドラッグで四角形を選択</li>
-                    <li><b>投げ縄</b>: クリックで頂点を追加、3点以上で自動確定</li>
-                    <li><b>Ctrl押下</b>: 追加モード（複数の選択範囲を作成）</li>
-                    <li><b>クリアボタン</b>: 全ての選択範囲を解除</li>
-                    <li>選択範囲がある場合、編集は選択範囲内のみに適用</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h3><span class="icon icon-sm">download</span> 出力</h3>
-                <ul>
-                    <li><b>PNGダウンロード</b>: 編集結果をファイルとして保存</li>
-                    <li><b>クリップボードにコピー</b>: 編集結果をコピー</li>
-                    <li><b>出力サイズ</b>: 幅を指定（高さは自動計算）</li>
-                </ul>
-            </div>
-        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="sidebar-title"><span class="icon icon-sm">history</span>編集履歴</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <button class="btn-secondary" id="resetBtn" style="width:100%">
+        <span class="icon icon-sm">refresh</span>リセット
+      </button>
     </div>
-    <script>
-    (() => {
-        const $ = id => document.getElementById(id);
-        const el = {
-            drop: $('drop'), file: $('file'), editor: $('editor'), sidebar: $('sidebar'),
-            origCvs: $('origCvs'), workCvs: $('workCvs'), hist: $('hist'), theme: $('theme'),
-            origContainer: $('origContainer'), workContainer: $('workContainer'),
-            tColor: $('tColor'), tTol: $('tTol'), tTolV: $('tTolV'),
-            rFrom: $('rFrom'), rTo: $('rTo'), rTol: $('rTol'), rTolV: $('rTolV'),
-            fColor: $('fColor'), fOnly: $('fOnly'),
-            outW: $('outW'), outH: $('outH'),
-            modePick: $('modePick'), modeCrop: $('modeCrop'), modeSelect: $('modeSelect'), modeLasso: $('modeLasso'), modeHand: $('modeHand'), modeInfo: $('modeInfo'),
-            tAll: $('tAll'),
-            origZoom: $('origZoom'), origZoomVal: $('origZoomVal'),
-            workZoom: $('workZoom'), workZoomVal: $('workZoomVal')
-        };
-        const origCtx = el.origCvs.getContext('2d');
-        const workCtx = el.workCvs.getContext('2d');
+  </div>
 
-        let origImg = null, history = [], idx = -1, ratio = 1;
-        let crop = { start: null, end: null, active: false, shift: false };
-        let mode = 'pick';
-        let selections = []; // 複数選択範囲を格納する配列
-        let currentSelection = null; // 現在編集中の選択範囲
-        let lassoPoints = [];
-        let addMode = false; // 選択範囲追加モード
-        let lassoActive = false;
-        let dark = localStorage.getItem('dark') === '1';
-        let zoomOrig = 100, zoomWork = 100;
-        let panOrig = { x: 0, y: 0 }, panWork = { x: 0, y: 0 };
-        let dragging = null;
+  <!-- Help Panel -->
+  <div class="help-panel" id="helpPanel">
+    <div class="help-header">
+      <h2><span class="icon icon-sm">help</span>使い方</h2>
+      <button class="btn-icon" id="closeHelp"><span class="icon">close</span></button>
+    </div>
+    <div class="help-content">
+      <div class="help-section">
+        <h3><span class="icon icon-sm">upload_file</span>画像の読み込み</h3>
+        <ul>
+          <li>ドロップゾーンに画像をドラッグ＆ドロップ</li>
+          <li>クリックしてファイルを選択</li>
+          <li><b>Ctrl+V</b> でクリップボードから貼り付け</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">mouse</span>キャンバス操作</h3>
+        <ul>
+          <li><b>ピッカー</b>: クリックで色を取得</li>
+          <li><b>トリミング</b>: ドラッグで切り抜き（Shift: 正方形）</li>
+          <li><b>矩形選択</b>: ドラッグで編集範囲を限定</li>
+          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で確定</li>
+          <li><b>ハンド</b>: ドラッグで画像を移動</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">edit</span>編集ツール</h3>
+        <ul>
+          <li><b>透過</b>: 指定色を透明に（許容値で範囲調整）</li>
+          <li><b>色置換</b>: 色Aを色Bに置き換え</li>
+          <li><b>塗りつぶし</b>: 透明/不透明部分を塗りつぶし</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">history</span>ショートカット</h3>
+        <ul>
+          <li><b>Ctrl+Z</b>: 元に戻す</li>
+          <li><b>Ctrl+Shift+Z / Ctrl+Y</b>: やり直し</li>
+          <li><b>Ctrl押下</b>: 選択範囲追加モード</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
-        // Theme
-        const setTheme = () => {
-            document.body.classList.toggle('dark', dark);
-            $('themeIcon').textContent = dark ? 'light_mode' : 'dark_mode';
-            localStorage.setItem('dark', dark ? '1' : '0');
-        };
-        setTheme();
-        el.theme.onclick = () => { dark = !dark; setTheme(); };
-        // Help side panel
-        const helpPanel = $('helpPanel');
-        $('helpBtn').onclick = () => helpPanel.classList.toggle('show');
-        $('closeHelp').onclick = () => helpPanel.classList.remove('show');
-        // Toggle original image
-        const origSection = $('origSection');
-        const toggleOrig = $('toggleOrig');
-        let showOrig = false;
-        toggleOrig.onclick = () => {
-            showOrig = !showOrig;
-            origSection.classList.toggle('hidden', !showOrig);
-            toggleOrig.classList.toggle('active', showOrig);
-            toggleOrig.innerHTML = showOrig 
-                ? '<span class="icon icon-sm">photo_library</span> 元画像を非表示' 
-                : '<span class="icon icon-sm">photo_library</span> 元画像を表示';
-            if (showOrig) setTimeout(fitOrigZoom, 50);
-        };
+  <script>
+  (function() {
+    'use strict';
+    
+    // ===== DOM Elements =====
+    const $ = id => document.getElementById(id);
+    const DOM = {
+      dropzone: $('dropzone'),
+      fileInput: $('fileInput'),
+      editor: $('editor'),
+      sidebar: $('sidebar'),
+      origCvs: $('origCvs'),
+      workCvs: $('workCvs'),
+      origContainer: $('origContainer'),
+      workContainer: $('workContainer'),
+      overlay: $('overlay'),
+      historyList: $('historyList'),
+      helpPanel: $('helpPanel'),
+      origSection: $('origSection'),
+      // Controls
+      tColor: $('tColor'), tTol: $('tTol'), tTolVal: $('tTolVal'), tAll: $('tAll'),
+      rFrom: $('rFrom'), rTo: $('rTo'), rTol: $('rTol'), rTolVal: $('rTolVal'),
+      fColor: $('fColor'), fOnly: $('fOnly'),
+      outW: $('outW'), outH: $('outH'),
+      workZoom: $('workZoom'), workZoomVal: $('workZoomVal'),
+      origZoom: $('origZoom'), origZoomVal: $('origZoomVal'),
+      modeHint: $('modeHint'),
+      // Buttons
+      modePick: $('modePick'), modeCrop: $('modeCrop'), 
+      modeSelect: $('modeSelect'), modeLasso: $('modeLasso'), modeMagic: $('modeMagic'), modeHand: $('modeHand'),
+      cropConfirm: $('cropConfirm'), lassoConfirm: $('lassoConfirm'), lassoClear: $('lassoClear'),
+      toggleOrig: $('toggleOrig')
+    };
+    
+    const origCtx = DOM.origCvs.getContext('2d');
+    const workCtx = DOM.workCvs.getContext('2d');
 
-        // Utils
-        const hex2rgb = hex => {
-            const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
-        };
-        const colorDist = (d, i, c) => Math.sqrt((d[i]-c.r)**2 + (d[i+1]-c.g)**2 + (d[i+2]-c.b)**2);
-        const getCoords = (e, cvs, z, pan) => {
-            const r = cvs.getBoundingClientRect();
-            const scale = z / 100;
-            const containerW = cvs.parentElement.clientWidth;
-            const containerH = cvs.parentElement.clientHeight;
-            const offsetX = (containerW - cvs.width * scale) / 2 + pan.x;
-            const offsetY = (containerH - cvs.height * scale) / 2 + pan.y;
-            return { 
-                x: (e.clientX - r.left + cvs.parentElement.scrollLeft - offsetX + (cvs.width * scale - cvs.offsetWidth) / 2) / scale, 
-                y: (e.clientY - r.top + cvs.parentElement.scrollTop - offsetY + (cvs.height * scale - cvs.offsetHeight) / 2) / scale 
-            };
-        };
+    // ===== State =====
+    const state = {
+      origImg: null,
+      history: [],
+      historyIdx: -1,
+      ratio: 1,
+      mode: 'pick',
+      dark: localStorage.getItem('dark') !== null ? localStorage.getItem('dark') === '1' : window.matchMedia('(prefers-color-scheme: dark)').matches,
+      zoom: { orig: 100, work: 100 },
+      pan: { orig: { x: 0, y: 0 }, work: { x: 0, y: 0 } },
+      crop: { start: null, end: null, active: false },
+      selections: [],
+      currentSelection: null,
+      lassoPoints: [],
+      addMode: false,
+      dragging: null
+    };
 
-        // Zoom functions with center pivot
-        const applyOrigZoom = () => {
-            const s = zoomOrig / 100;
-            el.origCvs.style.transform = `scale(${s}) translate(${panOrig.x / s}px, ${panOrig.y / s}px)`;
-            el.origZoomVal.textContent = zoomOrig + '%';
-            el.origZoom.value = zoomOrig;
-        };
-        const applyWorkZoom = () => {
-            const s = zoomWork / 100;
-            el.workCvs.style.transform = `scale(${s}) translate(${panWork.x / s}px, ${panWork.y / s}px)`;
-            el.workZoomVal.textContent = zoomWork + '%';
-            el.workZoom.value = zoomWork;
-        };
-        const fitOrigZoom = () => {
-            const cw = el.origContainer.clientWidth - 20;
-            const ch = el.origContainer.clientHeight - 20;
-            zoomOrig = Math.max(10, Math.round(Math.min(cw / el.origCvs.width, ch / el.origCvs.height) * 100));
-            panOrig = { x: 0, y: 0 };
-            applyOrigZoom();
-        };
-        const fitWorkZoom = () => {
-            const cw = el.workContainer.clientWidth - 20;
-            const ch = el.workContainer.clientHeight - 20;
-            zoomWork = Math.max(10, Math.round(Math.min(cw / el.workCvs.width, ch / el.workCvs.height) * 100));
-            panWork = { x: 0, y: 0 };
-            applyWorkZoom();
-        };
+    // ===== Utilities =====
+    const hex2rgb = hex => {
+      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 0, g: 0, b: 0 };
+    };
+    
+    const colorDist = (data, i, c) => 
+      Math.sqrt((data[i] - c.r) ** 2 + (data[i + 1] - c.g) ** 2 + (data[i + 2] - c.b) ** 2);
+    
+    const pointInPolygon = (px, py, pts) => {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+        if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
 
-        el.origZoom.oninput = () => { zoomOrig = +el.origZoom.value; applyOrigZoom(); };
-        el.workZoom.oninput = () => { zoomWork = +el.workZoom.value; applyWorkZoom(); };
-        $('origFit').onclick = fitOrigZoom;
-        $('workFit').onclick = fitWorkZoom;
+    // ===== Theme =====
+    const updateTheme = () => {
+      document.body.classList.toggle('dark', state.dark);
+      $('themeIcon').textContent = state.dark ? 'light_mode' : 'dark_mode';
+      localStorage.setItem('dark', state.dark ? '1' : '0');
+    };
+    updateTheme();
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (localStorage.getItem('dark') === null) {
+        state.dark = e.matches;
+        updateTheme();
+      }
+    });
+    $('themeBtn').onclick = () => { state.dark = !state.dark; updateTheme(); };
 
-        // Mouse wheel zoom (Ctrl + scroll, zoom toward cursor)
-        const wheelZoomOrig = e => {
-            e.preventDefault();
-            const rect = el.origContainer.getBoundingClientRect();
-            const mx = e.clientX - rect.left - rect.width / 2;
-            const my = e.clientY - rect.top - rect.height / 2;
-            const oldZoom = zoomOrig;
-            const delta = e.deltaY < 0 ? 10 : -10;
-            zoomOrig = Math.max(10, Math.min(400, zoomOrig + delta));
-            const ratio = zoomOrig / oldZoom;
-            panOrig.x = mx - (mx - panOrig.x) * ratio;
-            panOrig.y = my - (my - panOrig.y) * ratio;
-            applyOrigZoom();
-        };
-        const wheelZoomWork = e => {
-            e.preventDefault();
-            const rect = el.workContainer.getBoundingClientRect();
-            const mx = e.clientX - rect.left - rect.width / 2;
-            const my = e.clientY - rect.top - rect.height / 2;
-            const oldZoom = zoomWork;
-            const delta = e.deltaY < 0 ? 10 : -10;
-            zoomWork = Math.max(10, Math.min(400, zoomWork + delta));
-            const ratio = zoomWork / oldZoom;
-            panWork.x = mx - (mx - panWork.x) * ratio;
-            panWork.y = my - (my - panWork.y) * ratio;
-            applyWorkZoom();
-        };
-        el.origContainer.onwheel = wheelZoomOrig;
-        el.workContainer.onwheel = wheelZoomWork;
+    // ===== Help Panel =====
+    $('helpBtn').onclick = () => DOM.helpPanel.classList.toggle('show');
+    $('closeHelp').onclick = () => DOM.helpPanel.classList.remove('show');
 
-        // Hand tool (pan)
-        const setupPan = (container, cvs, getPan, setPan, applyZoom) => {
-            let startMouse = null, startPan = null;
-            container.onmousedown = e => {
-                if (mode !== 'hand' && container !== el.origContainer) return;
-                if (container === el.origContainer || mode === 'hand') {
-                    startMouse = { x: e.clientX, y: e.clientY };
-                    startPan = { ...getPan() };
-                    dragging = container;
-                    e.preventDefault();
-                }
-            };
-            document.addEventListener('mousemove', e => {
-                if (dragging !== container || !startMouse) return;
-                const dx = e.clientX - startMouse.x;
-                const dy = e.clientY - startMouse.y;
-                setPan({ x: startPan.x + dx, y: startPan.y + dy });
-                applyZoom();
-            });
-            document.addEventListener('mouseup', () => {
-                if (dragging === container) { dragging = null; startMouse = null; }
-            });
-        };
-        setupPan(el.origContainer, el.origCvs, () => panOrig, v => panOrig = v, applyOrigZoom);
+    // ===== Original Image Toggle =====
+    let showOrig = false;
+    DOM.toggleOrig.onclick = () => {
+      showOrig = !showOrig;
+      DOM.origSection.classList.toggle('hidden', !showOrig);
+      DOM.toggleOrig.classList.toggle('active', showOrig);
+      DOM.toggleOrig.innerHTML = showOrig 
+        ? '<span class="icon icon-sm">photo_library</span> 元画像を非表示' 
+        : '<span class="icon icon-sm">photo_library</span> 元画像を表示';
+      if (showOrig) setTimeout(fitOrigZoom, 50);
+    };
 
-        // History
-        const save = (label, detail = '') => {
-            const state = workCtx.getImageData(0, 0, el.workCvs.width, el.workCvs.height);
-            history = history.slice(0, idx + 1);
-            history.push({ data: state, label, detail, w: el.workCvs.width, h: el.workCvs.height, time: new Date().toLocaleTimeString() });
-            idx = history.length - 1;
-            renderHist();
-        };
+    // ===== Zoom =====
+    const applyZoom = (cvs, container, zoom, pan, valEl, sliderEl) => {
+      const s = zoom / 100;
+      cvs.style.transform = `scale(${s}) translate(${pan.x / s}px, ${pan.y / s}px)`;
+      valEl.textContent = zoom + '%';
+      sliderEl.value = zoom;
+    };
+    
+    const applyOrigZoom = () => applyZoom(DOM.origCvs, DOM.origContainer, state.zoom.orig, state.pan.orig, DOM.origZoomVal, DOM.origZoom);
+    const applyWorkZoom = () => applyZoom(DOM.workCvs, DOM.workContainer, state.zoom.work, state.pan.work, DOM.workZoomVal, DOM.workZoom);
+    
+    const fitZoom = (cvs, container, zoomKey, panKey) => {
+      const cw = container.clientWidth - 20;
+      const ch = container.clientHeight - 20;
+      state.zoom[zoomKey] = Math.max(10, Math.round(Math.min(cw / cvs.width, ch / cvs.height) * 100));
+      state.pan[panKey] = { x: 0, y: 0 };
+    };
+    
+    const fitOrigZoom = () => { fitZoom(DOM.origCvs, DOM.origContainer, 'orig', 'orig'); applyOrigZoom(); };
+    const fitWorkZoom = () => { fitZoom(DOM.workCvs, DOM.workContainer, 'work', 'work'); applyWorkZoom(); };
+    
+    DOM.origZoom.oninput = () => { state.zoom.orig = +DOM.origZoom.value; applyOrigZoom(); };
+    DOM.workZoom.oninput = () => { state.zoom.work = +DOM.workZoom.value; applyWorkZoom(); };
+    $('origFit').onclick = fitOrigZoom;
+    $('workFit').onclick = fitWorkZoom;
 
-        const goTo = i => {
-            if (i < 0 || i >= history.length) return;
-            idx = i;
-            const s = history[i];
-            el.workCvs.width = s.w; el.workCvs.height = s.h;
-            workCtx.putImageData(s.data, 0, 0);
-            ratio = s.w / s.h;
-            el.outW.value = s.w; el.outH.value = s.h;
-            fitWorkZoom();
-            renderHist();
-        };
+    // ===== Wheel Zoom =====
+    const wheelZoom = (e, container, zoomKey, panKey, applyFn) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mx = e.clientX - rect.left - rect.width / 2;
+      const my = e.clientY - rect.top - rect.height / 2;
+      const oldZoom = state.zoom[zoomKey];
+      const delta = e.deltaY < 0 ? 10 : -10;
+      state.zoom[zoomKey] = Math.max(10, Math.min(400, oldZoom + delta));
+      const r = state.zoom[zoomKey] / oldZoom;
+      state.pan[panKey].x = mx - (mx - state.pan[panKey].x) * r;
+      state.pan[panKey].y = my - (my - state.pan[panKey].y) * r;
+      applyFn();
+    };
+    
+    DOM.origContainer.onwheel = e => wheelZoom(e, DOM.origContainer, 'orig', 'orig', applyOrigZoom);
+    DOM.workContainer.onwheel = e => wheelZoom(e, DOM.workContainer, 'work', 'work', applyWorkZoom);
 
-        const delState = i => {
-            if (i === 0 || history.length <= 1) return;
-            history.splice(i, 1);
-            if (idx >= i) idx = Math.max(0, idx - 1);
-            goTo(idx);
-        };
+    // ===== Pan (Original) =====
+    let panState = { mouse: null, pan: null };
+    DOM.origContainer.onmousedown = e => {
+      panState.mouse = { x: e.clientX, y: e.clientY };
+      panState.pan = { ...state.pan.orig };
+      state.dragging = 'orig';
+      e.preventDefault();
+    };
 
-        const renderHist = () => {
-            el.hist.innerHTML = history.map((h, i) => `
-                <div class="history-item ${i === idx ? 'active' : ''}" data-i="${i}">
-                    <span class="num">${i + 1}</span>
-                    <div class="info-wrap">
-                        <div class="label">${h.label}</div>
-                        <div class="detail">${h.detail} (${h.w}×${h.h}) ${h.time}</div>
-                    </div>
-                    <button class="del" data-i="${i}" ${i === 0 ? 'disabled' : ''}>✕</button>
-                </div>
-            `).join('');
-            el.hist.querySelectorAll('.history-item').forEach(item => {
-                item.onclick = e => { if (!e.target.classList.contains('del')) goTo(+item.dataset.i); };
-            });
-            el.hist.querySelectorAll('.del').forEach(btn => {
-                btn.onclick = e => { e.stopPropagation(); delState(+btn.dataset.i); };
-            });
-        };
+    // ===== History =====
+    const saveHistory = (label, detail = '') => {
+      const data = workCtx.getImageData(0, 0, DOM.workCvs.width, DOM.workCvs.height);
+      state.history = state.history.slice(0, state.historyIdx + 1);
+      state.history.push({ data, label, detail, w: DOM.workCvs.width, h: DOM.workCvs.height, time: new Date().toLocaleTimeString() });
+      state.historyIdx = state.history.length - 1;
+      renderHistory();
+    };
 
-        // File Load
-        const load = file => {
-            if (!file?.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const img = new Image();
-                img.onload = () => { origImg = img; init(img); };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
+    const goToHistory = i => {
+      if (i < 0 || i >= state.history.length) return;
+      state.historyIdx = i;
+      const s = state.history[i];
+      DOM.workCvs.width = s.w;
+      DOM.workCvs.height = s.h;
+      workCtx.putImageData(s.data, 0, 0);
+      state.ratio = s.w / s.h;
+      DOM.outW.value = s.w;
+      DOM.outH.value = s.h;
+      fitWorkZoom();
+      renderHistory();
+    };
 
-        const init = img => {
-            el.origCvs.width = img.width;
-            el.origCvs.height = img.height;
-            origCtx.drawImage(img, 0, 0);
-            
-            el.workCvs.width = img.width;
-            el.workCvs.height = img.height;
-            workCtx.drawImage(img, 0, 0);
-            
-            ratio = img.width / img.height;
-            el.outW.value = img.width; el.outH.value = img.height;
-            history = []; idx = -1;
-            selections = []; currentSelection = null; addMode = false;
-            panOrig = { x: 0, y: 0 }; panWork = { x: 0, y: 0 };
-            
-            // 初期状態でフィット
-            fitOrigZoom();
-            fitWorkZoom();
-            
-            save('元画像', '読み込み');
-            el.editor.classList.remove('hidden');
-            el.sidebar.classList.remove('hidden');
-            setTimeout(() => { fitOrigZoom(); fitWorkZoom(); }, 50);
-        };
+    const deleteHistory = i => {
+      if (i === 0 || state.history.length <= 1) return;
+      state.history.splice(i, 1);
+      if (state.historyIdx >= i) state.historyIdx = Math.max(0, state.historyIdx - 1);
+      goToHistory(state.historyIdx);
+    };
 
-        // Drop Zone
-        el.drop.ondragover = e => { e.preventDefault(); el.drop.classList.add('dragover'); };
-        el.drop.ondragleave = () => el.drop.classList.remove('dragover');
-        el.drop.ondrop = e => { e.preventDefault(); el.drop.classList.remove('dragover'); load(e.dataTransfer.files[0]); };
-        el.drop.onclick = () => el.file.click();
-        el.file.onchange = e => load(e.target.files[0]);
-        document.onpaste = e => { for (const item of e.clipboardData.items) if (item.type.startsWith('image/')) { load(item.getAsFile()); break; } };
+    const renderHistory = () => {
+      DOM.historyList.innerHTML = state.history.map((h, i) => `
+        <div class="history-item ${i === state.historyIdx ? 'active' : ''}" data-i="${i}">
+          <span class="history-num">${i + 1}</span>
+          <div class="history-info">
+            <div class="history-label">${h.label}</div>
+            <div class="history-detail">${h.detail} (${h.w}×${h.h}) ${h.time}</div>
+          </div>
+          <button class="history-del" data-i="${i}" ${i === 0 ? 'disabled' : ''}>✕</button>
+        </div>
+      `).join('');
+      
+      DOM.historyList.querySelectorAll('.history-item').forEach(el => {
+        el.onclick = e => { if (!e.target.classList.contains('history-del')) goToHistory(+el.dataset.i); };
+      });
+      DOM.historyList.querySelectorAll('.history-del').forEach(btn => {
+        btn.onclick = e => { e.stopPropagation(); deleteHistory(+btn.dataset.i); };
+      });
+    };
 
-        // 投げ縄SVGオーバーレイ更新
-        const updateLassoOverlay = () => {
-            const svg = $('selectionOverlay');
-            if (mode !== 'lasso' || lassoPoints.length === 0) {
-                svg.innerHTML = '';
-                return;
-            }
-            const containerRect = el.workContainer.getBoundingClientRect();
-            const cvsRect = el.workCvs.getBoundingClientRect();
-            const scale = zoomWork / 100;
-            const offsetX = cvsRect.left - containerRect.left;
-            const offsetY = cvsRect.top - containerRect.top;
-            const pts = lassoPoints.map(p => ({
-                x: offsetX + p.x * scale,
-                y: offsetY + p.y * scale
-            }));
-            let pathD = `M ${pts[0].x} ${pts[0].y}`;
-            for (let i = 1; i < pts.length; i++) {
-                pathD += ` L ${pts[i].x} ${pts[i].y}`;
-            }
-            if (pts.length >= 3) pathD += ' Z';
-            let circles = pts.map((p, i) => 
-                `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${i === 0 ? '#ff5500' : '#ff9900'}" stroke="#fff" stroke-width="1"/>`
-            ).join('');
-            svg.innerHTML = `
-                <path d="${pathD}" fill="${pts.length >= 3 ? 'rgba(255, 153, 0, 0.15)' : 'none'}" stroke="#ff9900" stroke-width="2" stroke-dasharray="6,3" filter="drop-shadow(0 0 2px #000)"/>
-                ${circles}
-            `;
-        };
-        // Mode Switch
-        const redrawWork = () => {
-            if (idx < 0) return;
-            workCtx.putImageData(history[idx].data, 0, 0);
-            // 確定済みの全選択範囲を描画
-            selections.forEach((sel, idx) => {
-                const hue = (idx * 60) % 360; // 各選択範囲に異なる色を割り当て
-                if (sel.type === 'lasso') {
-                    const pts = sel.points;
-                    workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                    workCtx.beginPath();
-                    workCtx.moveTo(pts[0].x, pts[0].y);
-                    for (let i = 1; i < pts.length; i++) workCtx.lineTo(pts[i].x, pts[i].y);
-                    workCtx.closePath();
-                    workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
-                    workCtx.fill();
-                    workCtx.stroke();
-                    workCtx.setLineDash([]);
-                } else {
-                    workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                    workCtx.strokeRect(sel.x, sel.y, sel.w, sel.h);
-                    workCtx.setLineDash([]);
-                    workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
-                    workCtx.fillRect(sel.x, sel.y, sel.w, sel.h);
-                }
-            });
-            // 現在編集中の矩形選択の描画
-            if (currentSelection && currentSelection.type !== 'lasso') {
-                workCtx.strokeStyle = '#00cc66'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                workCtx.strokeRect(currentSelection.x, currentSelection.y, currentSelection.w, currentSelection.h);
-                workCtx.setLineDash([]);
-                workCtx.fillStyle = 'rgba(0, 204, 102, 0.15)';
-                workCtx.fillRect(currentSelection.x, currentSelection.y, currentSelection.w, currentSelection.h);
-            }
-            // 現在編集中の投げ縄選択の描画（確定済み）
-            if (currentSelection && currentSelection.type === 'lasso' && currentSelection.points) {
-                const pts = currentSelection.points;
-                workCtx.strokeStyle = '#ff9900'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                workCtx.beginPath();
-                workCtx.moveTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length; i++) workCtx.lineTo(pts[i].x, pts[i].y);
-                workCtx.closePath();
-                workCtx.fillStyle = 'rgba(255, 153, 0, 0.15)';
-                workCtx.fill();
-                workCtx.stroke();
-                workCtx.setLineDash([]);
-            }
-            // 投げ縄の描画中（未確定）
-            if (lassoPoints.length > 0 && (!currentSelection || currentSelection.type !== 'lasso')) {
-                workCtx.strokeStyle = '#ff9900'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                workCtx.beginPath();
-                workCtx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
-                for (let i = 1; i < lassoPoints.length; i++) workCtx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
-                if (lassoPoints.length > 2) { workCtx.closePath(); workCtx.fillStyle = 'rgba(255, 153, 0, 0.15)'; workCtx.fill(); }
-                workCtx.stroke();
-                workCtx.setLineDash([]);
-                lassoPoints.forEach((p, i) => {
-                    workCtx.beginPath(); workCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-                    workCtx.fillStyle = i === 0 ? '#ff5500' : '#ff9900'; workCtx.fill();
-                });
-            }
-        };
+    // ===== File Loading =====
+    const loadFile = file => {
+      if (!file?.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => { state.origImg = img; initEditor(img); };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
 
-        const lassoClearBtn = $('lassoClear');
-        const lassoConfirmBtn = $('lassoConfirm');
-        const cropConfirmBtn = $('cropConfirm');
-        
-        const updateSelectionCount = () => {
-            // 選択範囲カウント（ログ用）
-        };
-        const updateLassoButtons = () => {
-            const showConfirm = mode === 'lasso' && addMode && lassoPoints.length >= 3;
-            lassoConfirmBtn.style.display = showConfirm ? 'block' : 'none';
-            lassoClearBtn.style.display = (mode === 'lasso' || mode === 'select') ? 'block' : 'none';
-            cropConfirmBtn.style.display = (mode === 'crop' && crop.start && crop.end) ? 'block' : 'none';
-        };
-        const setMode = m => {
-            mode = m;
-            el.modePick.classList.toggle('active', m === 'pick');
-            el.modeCrop.classList.toggle('active', m === 'crop');
-            el.modeSelect.classList.toggle('active', m === 'select');
-            el.modeLasso.classList.toggle('active', m === 'lasso');
-            el.modeHand.classList.toggle('active', m === 'hand');
-            // モード切替
-            updateLassoButtons();
-            el.workContainer.classList.toggle('hand', m === 'hand');
-            updateModeInfo();
-            el.origContainer.classList.add('hand');
-            el.workCvs.className = m;
-            // モード切替時は現在編集中の選択のみクリア（確定済みの選択範囲は保持）
-            currentSelection = null; lassoPoints = []; updateLassoOverlay(); redrawWork();
-        };
-        // 投げ縄確定ボタン
-        lassoConfirmBtn.onclick = e => {
-            e.stopPropagation(); // クリックイベントの伝播を止める
-            if (lassoPoints.length >= 3) {
-                const newSel = { type: 'lasso', points: [...lassoPoints] };
-                selections.push(newSel);
-                currentSelection = null;
-                lassoPoints = [];
-                updateSelectionCount();
-                updateLassoOverlay();
-                updateLassoButtons();
-                redrawWork();
-            }
-        };
-        // Ctrlキーで追加モード切り替え
-        let ctrlPressed = false;
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Control' && !ctrlPressed) {
-                ctrlPressed = true;
-                addMode = true;
-                // 現在の選択を確定して追加
-                if (currentSelection) {
-                    selections.push(currentSelection);
-                    currentSelection = null;
-                    updateSelectionCount();
-                    redrawWork();
-                }
-                updateLassoButtons();
-                updateModeInfo();
-            }
-        });
-        document.addEventListener('keyup', e => {
-            if (e.key === 'Control') {
-                ctrlPressed = false;
-                addMode = false;
-                updateLassoButtons();
-                updateModeInfo();
-            }
-        });
-        // Undo/Redo キーボードショートカット
-        document.addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    // Redo: Ctrl+Shift+Z
-                    if (idx < history.length - 1) goTo(idx + 1);
-                } else {
-                    // Undo: Ctrl+Z
-                    if (idx > 0) goTo(idx - 1);
-                }
-            }
-            // Redo: Ctrl+Y (代替)
-            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                e.preventDefault();
-                if (idx < history.length - 1) goTo(idx + 1);
-            }
-        });
-        const updateModeInfo = () => {
-            const info = { 
-                pick: '<span class="icon icon-sm">lightbulb</span> クリックで色を取得', 
-                crop: '<span class="icon icon-sm">lightbulb</span> ドラッグでトリミング（Shift: 正方形）', 
-                select: '<span class="icon icon-sm">lightbulb</span> ドラッグで矩形選択（Ctrl押下で追加モード）' + (addMode ? ' <b style="color:var(--accent)">[追加モード]</b>' : ''),
-                lasso: '<span class="icon icon-sm">lightbulb</span> クリックで頂点追加（Ctrl押下で追加モード）' + (addMode ? ' <b style="color:var(--accent)">[追加モード]</b>' : ''),
-                hand: '<span class="icon icon-sm">lightbulb</span> ドラッグで画像を移動'
-            };
-            el.modeInfo.innerHTML = info[mode];
-        };
-        
-        lassoClearBtn.onclick = () => {
-            // 投げ縄・矩形選択モードでは全選択解除も兼ねる
-            selections = [];
-            currentSelection = null;
-            lassoPoints = [];
-            updateSelectionCount();
-            redrawWork();
-            updateLassoOverlay();
-            updateLassoButtons();
-        };
-        el.modePick.onclick = () => setMode('pick');
-        el.modeCrop.onclick = () => setMode('crop');
-        el.modeSelect.onclick = () => setMode('select');
-        el.modeLasso.onclick = () => setMode('lasso');
-        el.modeHand.onclick = () => setMode('hand');
-        setMode('pick');
+    const initEditor = img => {
+      DOM.origCvs.width = DOM.workCvs.width = img.width;
+      DOM.origCvs.height = DOM.workCvs.height = img.height;
+      origCtx.drawImage(img, 0, 0);
+      workCtx.drawImage(img, 0, 0);
+      
+      state.ratio = img.width / img.height;
+      DOM.outW.value = img.width;
+      DOM.outH.value = img.height;
+      state.history = [];
+      state.historyIdx = -1;
+      state.selections = [];
+      state.currentSelection = null;
+      state.pan.orig = { x: 0, y: 0 };
+      state.pan.work = { x: 0, y: 0 };
+      
+      saveHistory('元画像', '読み込み');
+      DOM.editor.classList.remove('hidden');
+      DOM.sidebar.classList.remove('hidden');
+      $('clearBtn').style.display = 'inline-flex';
+      setTimeout(() => { fitOrigZoom(); fitWorkZoom(); }, 50);
+    };
 
-        // Work canvas interactions
-        let workDragging = false, workStartMouse = null, workStartPan = null;
-        
-        // コンテナ全体でマウスイベントをキャプチャ（画像外からの選択を許可）
-        el.workContainer.onmousedown = e => {
-            if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
-            if (e.target === cropConfirmBtn || cropConfirmBtn.contains(e.target)) return;
-            if (e.target === lassoConfirmBtn || lassoConfirmBtn.contains(e.target)) return;
-            if (mode === 'hand') {
-                workDragging = true;
-                workStartMouse = { x: e.clientX, y: e.clientY };
-                workStartPan = { ...panWork };
-                e.preventDefault();
-            } else if (mode === 'crop' || mode === 'select') { 
-                const rect = el.workCvs.getBoundingClientRect();
-                const scale = zoomWork / 100;
-                crop.start = {
-                    x: (e.clientX - rect.left) / scale,
-                    y: (e.clientY - rect.top) / scale
-                };
-                crop.active = true; 
-                crop.shift = e.shiftKey; 
-                e.preventDefault();
-            }
-        };
-        
-        document.addEventListener('mousemove', e => {
-            if (workDragging && workStartMouse) {
-                const dx = e.clientX - workStartMouse.x;
-                const dy = e.clientY - workStartMouse.y;
-                panWork = { x: workStartPan.x + dx, y: workStartPan.y + dy };
-                applyWorkZoom();
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            workDragging = false;
-            workStartMouse = null;
-        });
+    // ===== Drop Zone =====
+    DOM.dropzone.ondragover = e => { e.preventDefault(); DOM.dropzone.classList.add('dragover'); };
+    DOM.dropzone.ondragleave = () => DOM.dropzone.classList.remove('dragover');
+    DOM.dropzone.ondrop = e => { e.preventDefault(); DOM.dropzone.classList.remove('dragover'); loadFile(e.dataTransfer.files[0]); };
+    DOM.dropzone.onclick = () => DOM.fileInput.click();
+    DOM.fileInput.onchange = e => loadFile(e.target.files[0]);
+    // ===== Clear Button =====
+    const clearBtn = $('clearBtn');
+    const clearAll = () => {
+      state.origImg = null;
+      state.history = [];
+      state.historyIdx = -1;
+      state.selections = [];
+      state.currentSelection = null;
+      state.lassoPoints = [];
+      DOM.editor.classList.add('hidden');
+      DOM.sidebar.classList.add('hidden');
+      DOM.origSection.classList.add('hidden');
+      clearBtn.style.display = 'none';
+      DOM.fileInput.value = '';
+    };
+    clearBtn.onclick = clearAll;
+    document.onpaste = e => {
+      for (const item of e.clipboardData.items) {
+        if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
+      }
+    };
 
-        el.workContainer.onmousemove = e => {
-            if ((mode !== 'crop' && mode !== 'select') || !crop.active) return;
-            crop.shift = e.shiftKey;
-            const rect = el.workCvs.getBoundingClientRect();
-            const scale = zoomWork / 100;
-            let end = {
-                x: (e.clientX - rect.left) / scale,
-                y: (e.clientY - rect.top) / scale
-            };
-            if (crop.shift) {
-                const dx = end.x - crop.start.x, dy = end.y - crop.start.y;
-                const size = Math.max(Math.abs(dx), Math.abs(dy));
-                end.x = crop.start.x + size * Math.sign(dx);
-                end.y = crop.start.y + size * Math.sign(dy);
-            }
-            crop.end = end;
-            workCtx.putImageData(history[idx].data, 0, 0);
-            // SVGオーバーレイで選択範囲を描画（画像外も表示可能）
-            const svg = $('selectionOverlay');
-            const containerRect = el.workContainer.getBoundingClientRect();
-            const cvsRect = el.workCvs.getBoundingClientRect();
-            const offsetX = cvsRect.left - containerRect.left;
-            const offsetY = cvsRect.top - containerRect.top;
-            const x1 = offsetX + Math.min(crop.start.x, crop.end.x) * scale;
-            const y1 = offsetY + Math.min(crop.start.y, crop.end.y) * scale;
-            const w = Math.abs(crop.end.x - crop.start.x) * scale;
-            const h = Math.abs(crop.end.y - crop.start.y) * scale;
-            const color = mode === 'crop' ? '#ff4444' : '#00cc66';
-            svg.innerHTML = `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="10,5" filter="drop-shadow(0 0 2px #000)"/>`;
-        };
-        
-        el.workContainer.onmouseup = () => {
-            if (crop.active && crop.end && Math.abs(crop.end.x - crop.start.x) > 10 && Math.abs(crop.end.y - crop.start.y) > 10) {
-                const imgW = el.workCvs.width, imgH = el.workCvs.height;
-                // 画像範囲内にクリップ
-                let x1 = Math.min(crop.start.x, crop.end.x);
-                let y1 = Math.min(crop.start.y, crop.end.y);
-                let x2 = Math.max(crop.start.x, crop.end.x);
-                let y2 = Math.max(crop.start.y, crop.end.y);
-                // クリップして画像範囲内に収める
-                x1 = Math.max(0, Math.min(x1, imgW));
-                y1 = Math.max(0, Math.min(y1, imgH));
-                x2 = Math.max(0, Math.min(x2, imgW));
-                y2 = Math.max(0, Math.min(y2, imgH));
-                const x = Math.round(x1), y = Math.round(y1);
-                const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
-                if (w <= 0 || h <= 0) { crop = { start: null, end: null, active: false }; if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0); return; }
-                if (mode === 'crop') {
-                    // ドラッグを離したら形を確定（確定ボタン待ち）
-                    crop.active = false;
-                    updateLassoButtons();
-                    return;
-                } else if (mode === 'select') {
-                    const newSel = { type: 'rect', x, y, w, h };
-                    if (addMode) {
-                        // 追加モード: 確定済みリストに追加
-                        selections.push(newSel);
-                        currentSelection = null;
-                        updateSelectionCount();
-                    } else {
-                        // 通常モード: 現在の選択として設定
-                        currentSelection = newSel;
-                    }
-                    redrawWork();
-                }
+    // ===== Mode Management =====
+    const modeHints = {
+      pick: '<span class="icon icon-sm">lightbulb</span>クリックで色を取得',
+      crop: '<span class="icon icon-sm">lightbulb</span>ドラッグでトリミング（Shift: 正方形）',
+      select: '<span class="icon icon-sm">lightbulb</span>ドラッグで矩形選択（Ctrl: 追加モード）',
+      lasso: '<span class="icon icon-sm">lightbulb</span>クリックで頂点追加（Ctrl: 追加モード）',
+      magic: '<span class="icon icon-sm">lightbulb</span>クリックで同色領域を自動選択（Ctrl: 追加）',
+      hand: '<span class="icon icon-sm">lightbulb</span>ドラッグで画像を移動'
+    };
+
+    const setMode = m => {
+      state.mode = m;
+      [DOM.modePick, DOM.modeCrop, DOM.modeSelect, DOM.modeLasso, DOM.modeMagic, DOM.modeHand].forEach(btn => btn.classList.remove('active'));
+      ({ pick: DOM.modePick, crop: DOM.modeCrop, select: DOM.modeSelect, lasso: DOM.modeLasso, magic: DOM.modeMagic, hand: DOM.modeHand })[m].classList.add('active');
+      DOM.workContainer.classList.toggle('hand', m === 'hand');
+      DOM.workCvs.className = m;
+      updateModeHint();
+      updateButtons();
+      state.currentSelection = null;
+      state.lassoPoints = [];
+      DOM.overlay.innerHTML = '';
+      if (state.historyIdx >= 0) {
+        workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
+      }
+    };
+
+    const updateModeHint = () => {
+      let hint = modeHints[state.mode];
+      if ((state.mode === 'select' || state.mode === 'lasso') && state.addMode) {
+        hint += ' <b style="color:var(--accent)">[追加モード]</b>';
+      }
+      DOM.modeHint.innerHTML = hint;
+    };
+
+    const updateButtons = () => {
+      DOM.lassoConfirm.style.display = (state.mode === 'lasso' && state.addMode && state.lassoPoints.length >= 3) ? 'block' : 'none';
+      DOM.lassoClear.style.display = (state.mode === 'lasso' || state.mode === 'select' || state.mode === 'magic') ? 'block' : 'none';
+      DOM.cropConfirm.style.display = (state.mode === 'crop' && state.crop.start && state.crop.end) ? 'block' : 'none';
+    };
+
+    DOM.modePick.onclick = () => setMode('pick');
+    DOM.modeCrop.onclick = () => setMode('crop');
+    DOM.modeSelect.onclick = () => setMode('select');
+    DOM.modeLasso.onclick = () => setMode('lasso');
+    DOM.modeMagic.onclick = () => setMode('magic');
+    DOM.modeHand.onclick = () => setMode('hand');
+    setMode('pick');
+    // ===== Magic Wand (Flood Fill Selection) =====
+    const floodFillSelect = (startX, startY, tolerance) => {
+      if (state.historyIdx < 0) return null;
+      const imgData = state.history[state.historyIdx].data;
+      const w = imgData.width, h = imgData.height;
+      const data = imgData.data;
+      if (startX < 0 || startX >= w || startY < 0 || startY >= h) return null;
+      const startIdx = (startY * w + startX) * 4;
+      const targetR = data[startIdx], targetG = data[startIdx + 1], targetB = data[startIdx + 2], targetA = data[startIdx + 3];
+      const visited = new Uint8Array(w * h);
+      const selected = [];
+      const stack = [[startX, startY]];
+      const colorMatch = (idx) => {
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+        const dist = Math.sqrt((r - targetR) ** 2 + (g - targetG) ** 2 + (b - targetB) ** 2 + (a - targetA) ** 2);
+        return dist <= tolerance;
+      };
+      while (stack.length > 0) {
+        const [x, y] = stack.pop();
+        const pixelIdx = y * w + x;
+        if (x < 0 || x >= w || y < 0 || y >= h) continue;
+        if (visited[pixelIdx]) continue;
+        const idx = pixelIdx * 4;
+        if (!colorMatch(idx)) continue;
+        visited[pixelIdx] = 1;
+        selected.push({ x, y });
+        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      }
+      if (selected.length === 0) return null;
+      // Convert to bounding box selection with pixel mask
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+      selected.forEach(p => {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      });
+      return {
+        type: 'magic',
+        x: minX, y: minY,
+        w: maxX - minX + 1,
+        h: maxY - minY + 1,
+        pixels: selected,
+        pixelSet: new Set(selected.map(p => p.y * w + p.x))
+      };
+    };
+    // ===== Color Picker Loupe =====
+    const loupe = $('pickerLoupe');
+    const loupeCvs = $('loupeCvs');
+    const loupeCtx = loupeCvs.getContext('2d');
+    const loupeSwatch = $('loupeSwatch');
+    const loupeHex = $('loupeHex');
+    const updateLoupe = (e, imgX, imgY) => {
+      if (state.mode !== 'pick' || state.historyIdx < 0) {
+        loupe.style.display = 'none';
+        return;
+      }
+      const imgData = state.history[state.historyIdx].data;
+      const imgW = imgData.width, imgH = imgData.height;
+      if (imgX < 0 || imgX >= imgW || imgY < 0 || imgY >= imgH) {
+        loupe.style.display = 'none';
+        return;
+      }
+      // Show loupe
+      loupe.style.display = 'block';
+      loupe.style.left = (e.clientX + 20) + 'px';
+      loupe.style.top = (e.clientY - 80) + 'px';
+      // Draw zoomed area (11x11 pixels centered on cursor)
+      loupeCtx.imageSmoothingEnabled = false;
+      loupeCtx.clearRect(0, 0, 60, 60);
+      const radius = 5;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const px = imgX + dx, py = imgY + dy;
+          if (px >= 0 && px < imgW && py >= 0 && py < imgH) {
+            const idx = (py * imgW + px) * 4;
+            const r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2], a = imgData.data[idx + 3];
+            if (a > 0) {
+              loupeCtx.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
             } else {
-                // ドラッグキャンセル時は元に戻す
-                if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0);
+              loupeCtx.fillStyle = (((dx + radius) + (dy + radius)) % 2 === 0) ? '#ccc' : '#fff';
             }
-            if (mode !== 'crop') {
-                crop = { start: null, end: null, active: false };
-                $('selectionOverlay').innerHTML = '';
-            }
-            crop.active = false;
-        };
+            loupeCtx.fillRect((dx + radius) * 5.45, (dy + radius) * 5.45, 5.45, 5.45);
+          }
+        }
+      }
+      // Get center pixel color
+      const idx = (imgY * imgW + imgX) * 4;
+      const r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2];
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+      loupeSwatch.style.background = hex;
+      loupeHex.textContent = hex.toUpperCase();
+    };
+    const hideLoupe = () => { loupe.style.display = 'none'; };
+    DOM.workContainer.addEventListener('mousemove', e => {
+      if (state.mode === 'pick') {
+        const rect = DOM.workCvs.getBoundingClientRect();
+        const scale = state.zoom.work / 100;
+        const x = Math.floor((e.clientX - rect.left) / scale);
+        const y = Math.floor((e.clientY - rect.top) / scale);
+        updateLoupe(e, x, y);
+      }
+    });
+    DOM.workContainer.addEventListener('mouseleave', hideLoupe);
 
-        let lastClickTime = 0;
-        el.workContainer.onclick = e => {
-            if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
-            if (e.target === cropConfirmBtn || cropConfirmBtn.contains(e.target)) return;
-            if (e.target === lassoConfirmBtn || lassoConfirmBtn.contains(e.target)) return;
-            const now = Date.now();
-            const rect = el.workCvs.getBoundingClientRect();
-            const scale = zoomWork / 100;
-            const x = Math.floor((e.clientX - rect.left) / scale);
-            const y = Math.floor((e.clientY - rect.top) / scale);
-            if (mode === 'pick') {
-                // カラーピッカーは画像範囲内のみ
-                const imgW = el.workCvs.width, imgH = el.workCvs.height;
-                if (x >= 0 && x < imgW && y >= 0 && y < imgH) {
-                    const p = workCtx.getImageData(x, y, 1, 1).data;
-                    const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
-                    el.tColor.value = hex;
-                    el.rFrom.value = hex;
-                }
-            } else if (mode === 'lasso') {
-                // 点を追加 - 画像外も許可
-                lassoPoints.push({ x, y });
-                if (lassoPoints.length >= 3) {
-                    if (addMode) {
-                        // 追加モード: 確定ボタンで追加（自動確定しない）
-                        currentSelection = null;
-                    } else {
-                        // 通常モード: 現在の選択として設定
-                        const newSel = { type: 'lasso', points: [...lassoPoints] };
-                        currentSelection = newSel;
-                    }
-                } else {
-                    currentSelection = null;
-                }
-                redrawWork();
-                updateLassoOverlay();
-                updateLassoButtons();
-            }
-            lastClickTime = now;
-        };
+    // ===== Canvas Drawing =====
+    const redrawCanvas = () => {
+      if (state.historyIdx < 0) return;
+      workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
+      
+      // Draw selections
+      const drawSelection = (sel, hue) => {
+        workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`;
+        workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
+        workCtx.lineWidth = 2;
+        workCtx.setLineDash([6, 3]);
+        
+        if (sel.type === 'lasso') {
+          workCtx.beginPath();
+          workCtx.moveTo(sel.points[0].x, sel.points[0].y);
+          sel.points.slice(1).forEach(p => workCtx.lineTo(p.x, p.y));
+          workCtx.closePath();
+          workCtx.fill();
+          workCtx.stroke();
+        } else if (sel.type === 'magic') {
+          // Draw each selected pixel
+          workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.4)`;
+          sel.pixels.forEach(p => workCtx.fillRect(p.x, p.y, 1, 1));
+        } else {
+          workCtx.fillRect(sel.x, sel.y, sel.w, sel.h);
+          workCtx.strokeRect(sel.x, sel.y, sel.w, sel.h);
+        }
+        workCtx.setLineDash([]);
+      };
+      
+      state.selections.forEach((sel, i) => drawSelection(sel, (i * 60) % 360));
+      if (state.currentSelection) drawSelection(state.currentSelection, 140);
+      
+      // Draw lasso points
+      if (state.lassoPoints.length > 0) {
+        workCtx.strokeStyle = '#ff9900';
+        workCtx.lineWidth = 2;
+        workCtx.setLineDash([6, 3]);
+        workCtx.beginPath();
+        workCtx.moveTo(state.lassoPoints[0].x, state.lassoPoints[0].y);
+        state.lassoPoints.slice(1).forEach(p => workCtx.lineTo(p.x, p.y));
+        if (state.lassoPoints.length > 2) {
+          workCtx.closePath();
+          workCtx.fillStyle = 'rgba(255, 153, 0, 0.15)';
+          workCtx.fill();
+        }
+        workCtx.stroke();
+        workCtx.setLineDash([]);
+        
+        state.lassoPoints.forEach((p, i) => {
+          workCtx.beginPath();
+          workCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          workCtx.fillStyle = i === 0 ? '#ff5500' : '#ff9900';
+          workCtx.fill();
+        });
+      }
+    };
 
-        // Tool Controls
-        el.tTol.oninput = () => el.tTolV.textContent = el.tTol.value;
-        el.rTol.oninput = () => el.rTolV.textContent = el.rTol.value;
-        el.outW.oninput = () => el.outH.value = Math.round((+el.outW.value || 1) / ratio);
+    const updateOverlay = () => {
+      if (state.mode !== 'lasso' || state.lassoPoints.length === 0) {
+        DOM.overlay.innerHTML = '';
+        return;
+      }
+      
+      const containerRect = DOM.workContainer.getBoundingClientRect();
+      const cvsRect = DOM.workCvs.getBoundingClientRect();
+      const scale = state.zoom.work / 100;
+      const offsetX = cvsRect.left - containerRect.left;
+      const offsetY = cvsRect.top - containerRect.top;
+      
+      const pts = state.lassoPoints.map(p => ({ x: offsetX + p.x * scale, y: offsetY + p.y * scale }));
+      let pathD = `M ${pts[0].x} ${pts[0].y}` + pts.slice(1).map(p => ` L ${p.x} ${p.y}`).join('');
+      if (pts.length >= 3) pathD += ' Z';
+      
+      const circles = pts.map((p, i) => 
+        `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${i === 0 ? '#ff5500' : '#ff9900'}" stroke="#fff" stroke-width="1"/>`
+      ).join('');
+      
+      DOM.overlay.innerHTML = `
+        <path d="${pathD}" fill="${pts.length >= 3 ? 'rgba(255,153,0,0.15)' : 'none'}" stroke="#ff9900" stroke-width="2" stroke-dasharray="6,3" filter="drop-shadow(0 0 2px #000)"/>
+        ${circles}
+      `;
+    };
 
-        // Apply Tools
-        const pointInPolygon = (px, py, pts) => {
-            let inside = false;
-            for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-                const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
-                if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
-            }
-            return inside;
-        };
-        const inSelection = (px, py) => {
-            // 選択範囲がない場合は全体が対象
-            const allSelections = currentSelection ? [...selections, currentSelection] : selections;
-            if (allSelections.length === 0) return true;
-            // いずれかの選択範囲に含まれていればtrue
-            return allSelections.some(sel => {
-                if (sel.type === 'lasso') {
-                    return pointInPolygon(px, py, sel.points);
-                }
-                return px >= sel.x && px < sel.x + sel.w && py >= sel.y && py < sel.y + sel.h;
-            });
-        };
+    // ===== Canvas Interactions =====
+    let workDrag = { active: false, start: null, startPan: null };
+    
+    DOM.workContainer.onmousedown = e => {
+      if ([DOM.lassoClear, DOM.lassoConfirm, DOM.cropConfirm].some(btn => btn.contains(e.target))) return;
+      
+      const rect = DOM.workCvs.getBoundingClientRect();
+      const scale = state.zoom.work / 100;
+      const x = (e.clientX - rect.left) / scale;
+      const y = (e.clientY - rect.top) / scale;
+      
+      if (state.mode === 'hand') {
+        workDrag = { active: true, start: { x: e.clientX, y: e.clientY }, startPan: { ...state.pan.work } };
+        state.dragging = 'work';
+      } else if (state.mode === 'crop' || state.mode === 'select') {
+        state.crop = { start: { x, y }, end: null, active: true, shift: e.shiftKey };
+      }
+      e.preventDefault();
+    };
 
-        $('applyT').onclick = () => {
-            const c = hex2rgb(el.tColor.value), tol = +el.tTol.value, all = el.tAll.checked;
-            // 履歴データから取得（選択範囲の描画を含まない）
-            const img = new ImageData(
-                new Uint8ClampedArray(history[idx].data.data),
-                history[idx].w,
-                history[idx].h
-            );
-            const imgW = el.workCvs.width;
-            let cnt = 0;
-            for (let i = 0; i < img.data.length; i += 4) {
-                const px = (i / 4) % imgW, py = Math.floor((i / 4) / imgW);
-                if (inSelection(px, py)) {
-                    if (all || colorDist(img.data, i, c) <= tol) { img.data[i+3] = 0; cnt++; }
-                }
-            }
-            workCtx.putImageData(img, 0, 0);
-            const allSels = currentSelection ? [...selections, currentSelection] : selections;
-            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
-            const modeInfo = all ? '全体' : `${el.tColor.value} 許容${tol}`;
-            selections = []; currentSelection = null; lassoPoints = [];
-            updateSelectionCount();
-            save('透過', `${modeInfo} → ${cnt}px${selInfo}`);
+    document.addEventListener('mousemove', e => {
+      // Pan original
+      if (state.dragging === 'orig' && panState.mouse) {
+        state.pan.orig = {
+          x: panState.pan.x + e.clientX - panState.mouse.x,
+          y: panState.pan.y + e.clientY - panState.mouse.y
         };
+        applyOrigZoom();
+      }
+      // Pan work
+      if (state.dragging === 'work' && workDrag.active) {
+        state.pan.work = {
+          x: workDrag.startPan.x + e.clientX - workDrag.start.x,
+          y: workDrag.startPan.y + e.clientY - workDrag.start.y
+        };
+        applyWorkZoom();
+      }
+    });
 
-        $('applyR').onclick = () => {
-            const fc = hex2rgb(el.rFrom.value), tc = hex2rgb(el.rTo.value), tol = +el.rTol.value;
-            // 履歴データから取得（選択範囲の描画を含まない）
-            const img = new ImageData(
-                new Uint8ClampedArray(history[idx].data.data),
-                history[idx].w,
-                history[idx].h
-            );
-            const imgW = el.workCvs.width;
-            let cnt = 0;
-            for (let i = 0; i < img.data.length; i += 4) {
-                const px = (i / 4) % imgW, py = Math.floor((i / 4) / imgW);
-                if (inSelection(px, py) && img.data[i+3] > 0 && colorDist(img.data, i, fc) <= tol) {
-                    img.data[i] = tc.r; img.data[i+1] = tc.g; img.data[i+2] = tc.b; cnt++;
-                }
-            }
-            workCtx.putImageData(img, 0, 0);
-            const allSels = currentSelection ? [...selections, currentSelection] : selections;
-            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
-            selections = []; currentSelection = null; lassoPoints = [];
-            updateSelectionCount();
-            save('色置換', `${el.rFrom.value}→${el.rTo.value} → ${cnt}px${selInfo}`);
-        };
+    document.addEventListener('mouseup', () => {
+      state.dragging = null;
+      panState.mouse = null;
+      workDrag.active = false;
+    });
 
-        $('applyF').onclick = () => {
-            const c = hex2rgb(el.fColor.value), only = el.fOnly.checked;
-            // 履歴データから取得（選択範囲の描画を含まない）
-            const img = new ImageData(
-                new Uint8ClampedArray(history[idx].data.data),
-                history[idx].w,
-                history[idx].h
-            );
-            const imgW = el.workCvs.width;
-            let cnt = 0;
-            for (let i = 0; i < img.data.length; i += 4) {
-                const px = (i / 4) % imgW, py = Math.floor((i / 4) / imgW);
-                if (inSelection(px, py) && (only ? img.data[i+3] === 0 : img.data[i+3] > 0)) {
-                    img.data[i] = c.r; img.data[i+1] = c.g; img.data[i+2] = c.b;
-                    if (only) img.data[i+3] = 255;
-                    cnt++;
-                }
-            }
-            workCtx.putImageData(img, 0, 0);
-            const allSels = currentSelection ? [...selections, currentSelection] : selections;
-            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
-            selections = []; currentSelection = null; lassoPoints = [];
-            updateSelectionCount();
-            save('塗りつぶし', `${el.fColor.value} ${only ? '透明のみ' : '不透明'} → ${cnt}px${selInfo}`);
-        };
+    DOM.workContainer.onmousemove = e => {
+      if ((state.mode !== 'crop' && state.mode !== 'select') || !state.crop.active) return;
+      
+      const rect = DOM.workCvs.getBoundingClientRect();
+      const scale = state.zoom.work / 100;
+      let end = { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
+      
+      if (e.shiftKey) {
+        const dx = end.x - state.crop.start.x, dy = end.y - state.crop.start.y;
+        const size = Math.max(Math.abs(dx), Math.abs(dy));
+        end = { x: state.crop.start.x + size * Math.sign(dx), y: state.crop.start.y + size * Math.sign(dy) };
+      }
+      state.crop.end = end;
+      
+      // Draw SVG overlay
+      const containerRect = DOM.workContainer.getBoundingClientRect();
+      const cvsRect = DOM.workCvs.getBoundingClientRect();
+      const offsetX = cvsRect.left - containerRect.left;
+      const offsetY = cvsRect.top - containerRect.top;
+      const x1 = offsetX + Math.min(state.crop.start.x, end.x) * scale;
+      const y1 = offsetY + Math.min(state.crop.start.y, end.y) * scale;
+      const w = Math.abs(end.x - state.crop.start.x) * scale;
+      const h = Math.abs(end.y - state.crop.start.y) * scale;
+      const color = state.mode === 'crop' ? '#ef4444' : '#10b981';
+      DOM.overlay.innerHTML = `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="10,5" filter="drop-shadow(0 0 2px rgba(0,0,0,0.5))"/>`;
+    };
 
-        // トリミング確定ボタン
-        cropConfirmBtn.onclick = e => {
-            e.stopPropagation();
-            if (!crop.start || !crop.end) return;
-            const imgW = el.workCvs.width, imgH = el.workCvs.height;
-            let x1 = Math.min(crop.start.x, crop.end.x);
-            let y1 = Math.min(crop.start.y, crop.end.y);
-            let x2 = Math.max(crop.start.x, crop.end.x);
-            let y2 = Math.max(crop.start.y, crop.end.y);
-            x1 = Math.max(0, Math.min(x1, imgW));
-            y1 = Math.max(0, Math.min(y1, imgH));
-            x2 = Math.max(0, Math.min(x2, imgW));
-            y2 = Math.max(0, Math.min(y2, imgH));
-            const x = Math.round(x1), y = Math.round(y1);
-            const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
-            if (w <= 0 || h <= 0) return;
-            const data = history[idx].data;
-            const srcW = history[idx].w;
-            const newData = new ImageData(w, h);
-            for (let py = 0; py < h; py++) {
-                for (let px = 0; px < w; px++) {
-                    const srcIdx = ((y + py) * srcW + (x + px)) * 4;
-                    const dstIdx = (py * w + px) * 4;
-                    newData.data[dstIdx] = data.data[srcIdx];
-                    newData.data[dstIdx + 1] = data.data[srcIdx + 1];
-                    newData.data[dstIdx + 2] = data.data[srcIdx + 2];
-                    newData.data[dstIdx + 3] = data.data[srcIdx + 3];
-                }
-            }
-            el.workCvs.width = w; el.workCvs.height = h;
-            workCtx.putImageData(newData, 0, 0);
-            ratio = w / h;
-            el.outW.value = w; el.outH.value = h;
-            panWork = { x: 0, y: 0 };
-            fitWorkZoom();
-            save('トリミング', `(${x},${y})→${w}×${h}`);
-            crop = { start: null, end: null, active: false };
-            $('selectionOverlay').innerHTML = '';
-            updateLassoButtons();
-        };
-        // Reset & Download
-        $('reset').onclick = () => { if (origImg) init(origImg); };
-        $('copy').onclick = async () => {
-            const w = +el.outW.value, h = +el.outH.value;
-            const cvs = document.createElement('canvas');
-            cvs.width = w; cvs.height = h;
-            cvs.getContext('2d').drawImage(el.workCvs, 0, 0, w, h);
-            try {
-                const blob = await new Promise(resolve => cvs.toBlob(resolve, 'image/png'));
-                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                const btn = $('copy');
-                const orig = btn.innerHTML;
-                btn.innerHTML = '<span class="icon icon-sm">check</span> コピーしました！';
-                setTimeout(() => btn.innerHTML = orig, 2000);
-            } catch (err) {
-                alert('クリップボードへのコピーに失敗しました');
-            }
-        };
-        $('dl').onclick = () => {
-            const w = +el.outW.value, h = +el.outH.value;
-            const cvs = document.createElement('canvas');
-            cvs.width = w; cvs.height = h;
-            cvs.getContext('2d').drawImage(el.workCvs, 0, 0, w, h);
-            const a = document.createElement('a');
-            a.download = 'edited.png';
-            a.href = cvs.toDataURL('image/png');
-            a.click();
-        };
-    })();
-    </script>
+    DOM.workContainer.onmouseup = () => {
+      if (!state.crop.active) return;
+      if (!state.crop.end) {
+        state.crop = { start: null, end: null, active: false };
+        DOM.overlay.innerHTML = '';
+        redrawCanvas();
+        return;
+      }
+      
+      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
+      let x1 = Math.max(0, Math.min(imgW, Math.min(state.crop.start.x, state.crop.end.x)));
+      let y1 = Math.max(0, Math.min(imgH, Math.min(state.crop.start.y, state.crop.end.y)));
+      let x2 = Math.max(0, Math.min(imgW, Math.max(state.crop.start.x, state.crop.end.x)));
+      let y2 = Math.max(0, Math.min(imgH, Math.max(state.crop.start.y, state.crop.end.y)));
+      const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
+      
+      if (w <= 10 || h <= 10) {
+        state.crop = { start: null, end: null, active: false };
+        DOM.overlay.innerHTML = '';
+        redrawCanvas();
+        return;
+      }
+      
+      if (state.mode === 'crop') {
+        state.crop.active = false;
+        updateButtons();
+      } else if (state.mode === 'select') {
+        const newSel = { type: 'rect', x: Math.round(x1), y: Math.round(y1), w, h };
+        if (state.addMode) {
+          state.selections.push(newSel);
+          state.currentSelection = null;
+        } else {
+          state.currentSelection = newSel;
+        }
+        state.crop = { start: null, end: null, active: false };
+        DOM.overlay.innerHTML = '';
+        redrawCanvas();
+      }
+    };
+
+    DOM.workContainer.onclick = e => {
+      if ([DOM.lassoClear, DOM.lassoConfirm, DOM.cropConfirm].some(btn => btn.contains(e.target))) return;
+      
+      const rect = DOM.workCvs.getBoundingClientRect();
+      const scale = state.zoom.work / 100;
+      const x = Math.floor((e.clientX - rect.left) / scale);
+      const y = Math.floor((e.clientY - rect.top) / scale);
+      
+      if (state.mode === 'pick') {
+        if (x >= 0 && x < DOM.workCvs.width && y >= 0 && y < DOM.workCvs.height) {
+          const p = workCtx.getImageData(x, y, 1, 1).data;
+          const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+          DOM.tColor.value = hex;
+          DOM.rFrom.value = hex;
+        }
+      } else if (state.mode === 'lasso') {
+        state.lassoPoints.push({ x, y });
+        if (state.lassoPoints.length >= 3 && !state.addMode) {
+          state.currentSelection = { type: 'lasso', points: [...state.lassoPoints] };
+        }
+        redrawCanvas();
+        updateOverlay();
+        updateButtons();
+      } else if (state.mode === 'magic') {
+        const tolerance = +DOM.tTol.value; // Reuse tolerance from transparency tool
+        const selection = floodFillSelect(x, y, tolerance);
+        if (selection) {
+          if (state.addMode) {
+            state.selections.push(selection);
+          } else {
+            state.currentSelection = selection;
+          }
+          redrawCanvas();
+        }
+      }
+    };
+
+    // ===== Tool Controls =====
+    DOM.tTol.oninput = () => DOM.tTolVal.textContent = DOM.tTol.value;
+    DOM.rTol.oninput = () => DOM.rTolVal.textContent = DOM.rTol.value;
+    DOM.outW.oninput = () => DOM.outH.value = Math.round((+DOM.outW.value || 1) / state.ratio);
+
+    // ===== Selection Check =====
+    const inSelection = (px, py) => {
+      const allSels = state.currentSelection ? [...state.selections, state.currentSelection] : state.selections;
+      if (allSels.length === 0) return true;
+      const imgW = DOM.workCvs.width;
+      return allSels.some(sel => {
+        if (sel.type === 'lasso') return pointInPolygon(px, py, sel.points);
+        if (sel.type === 'magic') return sel.pixelSet.has(py * imgW + px);
+        return px >= sel.x && px < sel.x + sel.w && py >= sel.y && py < sel.y + sel.h;
+      });
+    };
+
+    // ===== Apply Tools =====
+    $('applyT').onclick = () => {
+      const c = hex2rgb(DOM.tColor.value), tol = +DOM.tTol.value, all = DOM.tAll.checked;
+      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
+      let cnt = 0;
+      for (let i = 0; i < img.data.length; i += 4) {
+        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
+        if (inSelection(px, py) && (all || colorDist(img.data, i, c) <= tol)) {
+          img.data[i + 3] = 0;
+          cnt++;
+        }
+      }
+      workCtx.putImageData(img, 0, 0);
+      const selInfo = state.selections.length + (state.currentSelection ? 1 : 0);
+      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
+      saveHistory('透過', `${all ? '全体' : DOM.tColor.value + ' 許容' + tol} → ${cnt}px${selInfo > 0 ? ` [${selInfo}選択]` : ''}`);
+    };
+
+    $('applyR').onclick = () => {
+      const fc = hex2rgb(DOM.rFrom.value), tc = hex2rgb(DOM.rTo.value), tol = +DOM.rTol.value;
+      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
+      let cnt = 0;
+      for (let i = 0; i < img.data.length; i += 4) {
+        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
+        if (inSelection(px, py) && img.data[i + 3] > 0 && colorDist(img.data, i, fc) <= tol) {
+          img.data[i] = tc.r; img.data[i + 1] = tc.g; img.data[i + 2] = tc.b;
+          cnt++;
+        }
+      }
+      workCtx.putImageData(img, 0, 0);
+      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
+      saveHistory('色置換', `${DOM.rFrom.value}→${DOM.rTo.value} → ${cnt}px`);
+    };
+
+    $('applyF').onclick = () => {
+      const c = hex2rgb(DOM.fColor.value), only = DOM.fOnly.checked;
+      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
+      let cnt = 0;
+      for (let i = 0; i < img.data.length; i += 4) {
+        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
+        if (inSelection(px, py) && (only ? img.data[i + 3] === 0 : img.data[i + 3] > 0)) {
+          img.data[i] = c.r; img.data[i + 1] = c.g; img.data[i + 2] = c.b;
+          if (only) img.data[i + 3] = 255;
+          cnt++;
+        }
+      }
+      workCtx.putImageData(img, 0, 0);
+      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
+      saveHistory('塗りつぶし', `${DOM.fColor.value} ${only ? '透明のみ' : '不透明'} → ${cnt}px`);
+    };
+
+    // ===== Crop Confirm =====
+    DOM.cropConfirm.onclick = e => {
+      e.stopPropagation();
+      if (!state.crop.start || !state.crop.end) return;
+      
+      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
+      let x1 = Math.max(0, Math.min(imgW, Math.min(state.crop.start.x, state.crop.end.x)));
+      let y1 = Math.max(0, Math.min(imgH, Math.min(state.crop.start.y, state.crop.end.y)));
+      let x2 = Math.max(0, Math.min(imgW, Math.max(state.crop.start.x, state.crop.end.x)));
+      let y2 = Math.max(0, Math.min(imgH, Math.max(state.crop.start.y, state.crop.end.y)));
+      const x = Math.round(x1), y = Math.round(y1), w = Math.round(x2 - x1), h = Math.round(y2 - y1);
+      
+      if (w <= 0 || h <= 0) return;
+      
+      const srcData = state.history[state.historyIdx].data;
+      const srcW = state.history[state.historyIdx].w;
+      const newData = new ImageData(w, h);
+      
+      for (let py = 0; py < h; py++) {
+        for (let px = 0; px < w; px++) {
+          const srcIdx = ((y + py) * srcW + (x + px)) * 4;
+          const dstIdx = (py * w + px) * 4;
+          newData.data[dstIdx] = srcData.data[srcIdx];
+          newData.data[dstIdx + 1] = srcData.data[srcIdx + 1];
+          newData.data[dstIdx + 2] = srcData.data[srcIdx + 2];
+          newData.data[dstIdx + 3] = srcData.data[srcIdx + 3];
+        }
+      }
+      
+      DOM.workCvs.width = w;
+      DOM.workCvs.height = h;
+      workCtx.putImageData(newData, 0, 0);
+      state.ratio = w / h;
+      DOM.outW.value = w;
+      DOM.outH.value = h;
+      state.pan.work = { x: 0, y: 0 };
+      fitWorkZoom();
+      saveHistory('トリミング', `(${x},${y})→${w}×${h}`);
+      
+      state.crop = { start: null, end: null, active: false };
+      DOM.overlay.innerHTML = '';
+      updateButtons();
+    };
+
+    // ===== Lasso Buttons =====
+    DOM.lassoConfirm.onclick = e => {
+      e.stopPropagation();
+      if (state.lassoPoints.length >= 3) {
+        state.selections.push({ type: 'lasso', points: [...state.lassoPoints] });
+        state.currentSelection = null;
+        state.lassoPoints = [];
+        updateOverlay();
+        updateButtons();
+        redrawCanvas();
+      }
+    };
+
+    DOM.lassoClear.onclick = () => {
+      state.selections = [];
+      state.currentSelection = null;
+      state.lassoPoints = [];
+      redrawCanvas();
+      updateOverlay();
+      updateButtons();
+    };
+
+    // ===== Keyboard Shortcuts =====
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Control' && !state.addMode) {
+        state.addMode = true;
+        if (state.currentSelection) {
+          state.selections.push(state.currentSelection);
+          state.currentSelection = null;
+          redrawCanvas();
+        }
+        updateButtons();
+        updateModeHint();
+      }
+      
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (state.historyIdx < state.history.length - 1) goToHistory(state.historyIdx + 1);
+        } else {
+          if (state.historyIdx > 0) goToHistory(state.historyIdx - 1);
+        }
+      }
+      
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        if (state.historyIdx < state.history.length - 1) goToHistory(state.historyIdx + 1);
+      }
+    });
+
+    document.addEventListener('keyup', e => {
+      if (e.key === 'Control') {
+        state.addMode = false;
+        updateButtons();
+        updateModeHint();
+      }
+    });
+
+    // ===== Reset & Export =====
+    $('resetBtn').onclick = () => { if (state.origImg) initEditor(state.origImg); };
+
+    $('copyBtn').onclick = async () => {
+      const w = +DOM.outW.value, h = +DOM.outH.value;
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      cvs.getContext('2d').drawImage(DOM.workCvs, 0, 0, w, h);
+      try {
+        const blob = await new Promise(resolve => cvs.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        const btn = $('copyBtn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<span class="icon icon-sm">check</span>コピーしました！';
+        setTimeout(() => btn.innerHTML = orig, 2000);
+      } catch (err) {
+        alert('クリップボードへのコピーに失敗しました');
+      }
+    };
+
+    $('downloadBtn').onclick = () => {
+      const w = +DOM.outW.value, h = +DOM.outH.value;
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      cvs.getContext('2d').drawImage(DOM.workCvs, 0, 0, w, h);
+      const a = document.createElement('a');
+      a.download = 'edited.png';
+      a.href = cvs.toDataURL('image/png');
+      a.click();
+    };
+  })();
+  </script>
 </body>
 </html>
