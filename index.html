@@ -899,12 +899,13 @@
         </ul>
       </div>
       <div class="help-section">
-        <h3><span class="icon icon-sm">mouse</span>キャンバス操作</h3>
+        <h3><span class="icon icon-sm">mouse</span>キャンバス操作モード</h3>
         <ul>
-          <li><b>ピッカー</b>: クリックで色を取得</li>
-          <li><b>トリミング</b>: ドラッグで切り抜き（Shift: 正方形）</li>
+          <li><b>ピッカー</b>: クリックで色を取得（ルーペ表示付き）</li>
+          <li><b>トリミング</b>: ドラッグで範囲選択、確定ボタンで切り抜き（Shift: 正方形）</li>
           <li><b>矩形選択</b>: ドラッグで編集範囲を限定</li>
-          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で確定</li>
+          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で選択範囲として機能</li>
+          <li><b>自動選択</b>: クリックで同色の連続領域を自動選択（許容値で調整）</li>
           <li><b>ハンド</b>: ドラッグで画像を移動</li>
         </ul>
       </div>
@@ -914,14 +915,40 @@
           <li><b>透過</b>: 指定色を透明に（許容値で範囲調整）</li>
           <li><b>色置換</b>: 色Aを色Bに置き換え</li>
           <li><b>塗りつぶし</b>: 透明/不透明部分を塗りつぶし</li>
+          <li>選択範囲があれば、その範囲内のみに適用</li>
         </ul>
       </div>
       <div class="help-section">
-        <h3><span class="icon icon-sm">history</span>ショートカット</h3>
+        <h3><span class="icon icon-sm">zoom_in</span>ズーム・移動</h3>
         <ul>
-          <li><b>Ctrl+Z</b>: 元に戻す</li>
-          <li><b>Ctrl+Shift+Z / Ctrl+Y</b>: やり直し</li>
-          <li><b>Ctrl押下</b>: 選択範囲追加モード</li>
+          <li>スクロールでズームイン/アウト</li>
+          <li>スライダーで10%〜400%の範囲で調整</li>
+          <li>「フィット」ボタンで画面にフィット</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">history</span>履歴・ショートカット</h3>
+        <ul>
+          <li><b>Ctrl+Z</b>: 元に戻す（Undo）</li>
+          <li><b>Ctrl+Shift+Z / Ctrl+Y</b>: やり直し（Redo）</li>
+          <li><b>Ctrl押下</b>: 選択範囲追加モード（複数選択可能）</li>
+          <li>履歴リストをクリックで任意の状態に復元</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">download</span>出力</h3>
+        <ul>
+          <li><b>PNGダウンロード</b>: 編集結果をPNG形式で保存</li>
+          <li><b>クリップボードにコピー</b>: 編集結果をコピー</li>
+          <li><b>出力サイズ</b>: 幅を指定すると高さは自動調整</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3><span class="icon icon-sm">settings</span>その他</h3>
+        <ul>
+          <li><b>ダークモード</b>: システム設定に連動、手動切替も可能</li>
+          <li><b>クリアボタン</b>: 編集をリセットして初期画面に戻る</li>
+          <li><b>リセットボタン</b>: 元画像の状態に戻す</li>
         </ul>
       </div>
     </div>
