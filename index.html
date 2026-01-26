@@ -197,9 +197,7 @@
                             <button id="workFit">フィット</button>
                             <span style="font-size:10px;color:var(--text-muted)">スクロールでズーム</span>
                         </div>
-                        <div class="selection-controls" id="selectionControls" style="display: none; gap: 8px; justify-content: center; margin-top: 10px;">
-                            <span id="selectionCount" style="font-size: 11px; color: var(--text-muted); align-self: center;"></span>
-                        </div>
+                        
                     </div>
                 </div>
                 <button class="toggle-orig" id="toggleOrig"><span class="icon icon-sm">photo_library</span> 元画像を表示</button>
@@ -658,11 +656,8 @@
         const lassoClearBtn = $('lassoClear');
         const lassoConfirmBtn = $('lassoConfirm');
         
-        const selectionCountSpan = $('selectionCount');
-        const selectionControlsDiv = $('selectionControls');
         const updateSelectionCount = () => {
-            const cnt = selections.length;
-            selectionCountSpan.textContent = cnt > 0 ? `${cnt}個の選択範囲` : '';
+            // 選択範囲カウント（ログ用）
         };
         const updateLassoButtons = () => {
             const showConfirm = mode === 'lasso' && addMode && lassoPoints.length >= 3;
@@ -676,8 +671,7 @@
             el.modeSelect.classList.toggle('active', m === 'select');
             el.modeLasso.classList.toggle('active', m === 'lasso');
             el.modeHand.classList.toggle('active', m === 'hand');
-            // 選択コントロールは矩形選択と投げ縄のときだけ表示
-            selectionControlsDiv.style.display = (m === 'select' || m === 'lasso') ? 'flex' : 'none';
+            // モード切替
             updateLassoButtons();
             el.workContainer.classList.toggle('hand', m === 'hand');
             updateModeInfo();
