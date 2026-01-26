@@ -100,7 +100,9 @@
         .canvas-container.hand:active { cursor: grabbing; }
         .lasso-clear { position: absolute; bottom: 10px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(255, 153, 0, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
         .lasso-clear:hover { background: rgba(255, 120, 0, 1); }
-        .lasso-confirm { position: absolute; bottom: 50px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(0, 204, 102, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
+        .crop-confirm { position: absolute; bottom: 50px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(255, 68, 68, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
+        .crop-confirm:hover { background: rgba(220, 50, 50, 1); }
+        .lasso-confirm { position: absolute; bottom: 90px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(0, 204, 102, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
         .lasso-confirm:hover { background: rgba(0, 180, 90, 1); }
         .zoom-row { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 6px; }
         .zoom-row input[type="range"] { width: 60px; }
@@ -188,7 +190,7 @@
                             <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
                         </div>
                         <p class="info" id="modeInfo"><span class="icon icon-sm">lightbulb</span> クリックで色を取得</p>
-                        <div class="canvas-container" id="workContainer"><canvas id="workCvs"></canvas><svg id="selectionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></svg><button class="lasso-confirm" id="lassoConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button></div>
+                        <div class="canvas-container" id="workContainer"><canvas id="workCvs"></canvas><svg id="selectionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></svg><button class="crop-confirm" id="cropConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-confirm" id="lassoConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button></div>
                         <div class="zoom-row">
                             <span class="icon icon-sm">zoom_out</span>
                             <input type="range" id="workZoom" min="10" max="400" value="100">
@@ -655,6 +657,7 @@
 
         const lassoClearBtn = $('lassoClear');
         const lassoConfirmBtn = $('lassoConfirm');
+        const cropConfirmBtn = $('cropConfirm');
         
         const updateSelectionCount = () => {
             // 選択範囲カウント（ログ用）
@@ -663,6 +666,7 @@
             const showConfirm = mode === 'lasso' && addMode && lassoPoints.length >= 3;
             lassoConfirmBtn.style.display = showConfirm ? 'block' : 'none';
             lassoClearBtn.style.display = (mode === 'lasso' || mode === 'select') ? 'block' : 'none';
+            cropConfirmBtn.style.display = (mode === 'crop' && crop.start && crop.end) ? 'block' : 'none';
         };
         const setMode = m => {
             mode = m;
@@ -771,6 +775,8 @@
         // コンテナ全体でマウスイベントをキャプチャ（画像外からの選択を許可）
         el.workContainer.onmousedown = e => {
             if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
+            if (e.target === cropConfirmBtn || cropConfirmBtn.contains(e.target)) return;
+            if (e.target === lassoConfirmBtn || lassoConfirmBtn.contains(e.target)) return;
             if (mode === 'hand') {
                 workDragging = true;
                 workStartMouse = { x: e.clientX, y: e.clientY };
@@ -851,26 +857,10 @@
                 const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
                 if (w <= 0 || h <= 0) { crop = { start: null, end: null, active: false }; if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0); return; }
                 if (mode === 'crop') {
-                    const data = history[idx].data;
-                    const srcW = history[idx].w;
-                    const newData = new ImageData(w, h);
-                    for (let py = 0; py < h; py++) {
-                        for (let px = 0; px < w; px++) {
-                            const srcIdx = ((y + py) * srcW + (x + px)) * 4;
-                            const dstIdx = (py * w + px) * 4;
-                            newData.data[dstIdx] = data.data[srcIdx];
-                            newData.data[dstIdx + 1] = data.data[srcIdx + 1];
-                            newData.data[dstIdx + 2] = data.data[srcIdx + 2];
-                            newData.data[dstIdx + 3] = data.data[srcIdx + 3];
-                        }
-                    }
-                    el.workCvs.width = w; el.workCvs.height = h;
-                    workCtx.putImageData(newData, 0, 0);
-                    ratio = w / h;
-                    el.outW.value = w; el.outH.value = h;
-                    panWork = { x: 0, y: 0 };
-                    fitWorkZoom();
-                    save('トリミング', `(${x},${y})→${w}×${h}`);
+                    // ドラッグを離したら形を確定（確定ボタン待ち）
+                    crop.active = false;
+                    updateLassoButtons();
+                    return;
                 } else if (mode === 'select') {
                     const newSel = { type: 'rect', x, y, w, h };
                     if (addMode) {
@@ -888,14 +878,18 @@
                 // ドラッグキャンセル時は元に戻す
                 if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0);
             }
-            crop = { start: null, end: null, active: false };
-            // SVGオーバーレイをクリア
-            $('selectionOverlay').innerHTML = '';
+            if (mode !== 'crop') {
+                crop = { start: null, end: null, active: false };
+                $('selectionOverlay').innerHTML = '';
+            }
+            crop.active = false;
         };
 
         let lastClickTime = 0;
         el.workContainer.onclick = e => {
             if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
+            if (e.target === cropConfirmBtn || cropConfirmBtn.contains(e.target)) return;
+            if (e.target === lassoConfirmBtn || lassoConfirmBtn.contains(e.target)) return;
             const now = Date.now();
             const rect = el.workCvs.getBoundingClientRect();
             const scale = zoomWork / 100;
@@ -1034,6 +1028,46 @@
             save('塗りつぶし', `${el.fColor.value} ${only ? '透明のみ' : '不透明'} → ${cnt}px${selInfo}`);
         };
 
+        // トリミング確定ボタン
+        cropConfirmBtn.onclick = e => {
+            e.stopPropagation();
+            if (!crop.start || !crop.end) return;
+            const imgW = el.workCvs.width, imgH = el.workCvs.height;
+            let x1 = Math.min(crop.start.x, crop.end.x);
+            let y1 = Math.min(crop.start.y, crop.end.y);
+            let x2 = Math.max(crop.start.x, crop.end.x);
+            let y2 = Math.max(crop.start.y, crop.end.y);
+            x1 = Math.max(0, Math.min(x1, imgW));
+            y1 = Math.max(0, Math.min(y1, imgH));
+            x2 = Math.max(0, Math.min(x2, imgW));
+            y2 = Math.max(0, Math.min(y2, imgH));
+            const x = Math.round(x1), y = Math.round(y1);
+            const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
+            if (w <= 0 || h <= 0) return;
+            const data = history[idx].data;
+            const srcW = history[idx].w;
+            const newData = new ImageData(w, h);
+            for (let py = 0; py < h; py++) {
+                for (let px = 0; px < w; px++) {
+                    const srcIdx = ((y + py) * srcW + (x + px)) * 4;
+                    const dstIdx = (py * w + px) * 4;
+                    newData.data[dstIdx] = data.data[srcIdx];
+                    newData.data[dstIdx + 1] = data.data[srcIdx + 1];
+                    newData.data[dstIdx + 2] = data.data[srcIdx + 2];
+                    newData.data[dstIdx + 3] = data.data[srcIdx + 3];
+                }
+            }
+            el.workCvs.width = w; el.workCvs.height = h;
+            workCtx.putImageData(newData, 0, 0);
+            ratio = w / h;
+            el.outW.value = w; el.outH.value = h;
+            panWork = { x: 0, y: 0 };
+            fitWorkZoom();
+            save('トリミング', `(${x},${y})→${w}×${h}`);
+            crop = { start: null, end: null, active: false };
+            $('selectionOverlay').innerHTML = '';
+            updateLassoButtons();
+        };
         // Reset & Download
         $('reset').onclick = () => { if (origImg) init(origImg); };
         $('copy').onclick = async () => {
