@@ -284,7 +284,8 @@
     .form-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     
     .form-row label {
@@ -304,6 +305,8 @@
     
     input[type="range"] {
       flex: 1;
+      min-width: 60px;
+      max-width: 100px;
       height: 6px;
       border-radius: 3px;
       background: var(--border);
@@ -852,6 +855,19 @@
             </div>
             <div class="card-footer">
               <button class="btn-primary" id="applyF">適用</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="icon icon-sm">grid_view</span>モザイク</div>
+            <div class="card-body">
+              <div class="form-row">
+                <label>サイズ</label>
+                <input type="range" id="mosSize" min="2" max="50" value="10">
+                <input type="number" class="tol-input" id="mosSizeVal" value="10" min="2" max="50">
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn-primary" id="applyMos">適用</button>
             </div>
           </div>
         </div>
@@ -1929,6 +1945,67 @@
     DOM.tTol.ondblclick = () => { DOM.tTol.value = 30; DOM.tTolVal.value = '30'; };
     DOM.rTol.ondblclick = () => { DOM.rTol.value = 30; DOM.rTolVal.value = '30'; };
     DOM.mTol.ondblclick = () => { DOM.mTol.value = 30; DOM.mTolVal.value = '30'; };
+    // ===== Mosaic Tool =====
+    const mosSize = $('mosSize');
+    const mosSizeVal = $('mosSizeVal');
+    mosSize.oninput = () => mosSizeVal.value = mosSize.value;
+    mosSizeVal.oninput = () => { mosSize.value = Math.max(2, Math.min(50, +mosSizeVal.value || 2)); };
+    mosSize.ondblclick = () => { mosSize.value = 10; mosSizeVal.value = '10'; };
+    $('applyMos').onclick = () => {
+      const size = +mosSize.value;
+      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
+      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), imgW, imgH);
+      let cnt = 0;
+      // Process mosaic blocks
+      for (let by = 0; by < imgH; by += size) {
+        for (let bx = 0; bx < imgW; bx += size) {
+          // Check if any pixel in this block is in selection
+          let blockInSelection = false;
+          const blockPixels = [];
+          for (let py = by; py < Math.min(by + size, imgH); py++) {
+            for (let px = bx; px < Math.min(bx + size, imgW); px++) {
+              if (inSelection(px, py)) {
+                blockInSelection = true;
+              }
+              blockPixels.push({ x: px, y: py });
+            }
+          }
+          if (!blockInSelection) continue;
+          // Calculate average color for this block (only from selected pixels)
+          let r = 0, g = 0, b = 0, a = 0, count = 0;
+          for (const p of blockPixels) {
+            if (inSelection(p.x, p.y)) {
+              const idx = (p.y * imgW + p.x) * 4;
+              r += img.data[idx];
+              g += img.data[idx + 1];
+              b += img.data[idx + 2];
+              a += img.data[idx + 3];
+              count++;
+            }
+          }
+          if (count === 0) continue;
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+          a = Math.round(a / count);
+          // Apply average color to all selected pixels in block
+          for (const p of blockPixels) {
+            if (inSelection(p.x, p.y)) {
+              const idx = (p.y * imgW + p.x) * 4;
+              img.data[idx] = r;
+              img.data[idx + 1] = g;
+              img.data[idx + 2] = b;
+              img.data[idx + 3] = a;
+              cnt++;
+            }
+          }
+        }
+      }
+      workCtx.putImageData(img, 0, 0);
+      const selInfo = state.selections.length + (state.currentSelection ? 1 : 0);
+      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
+      saveHistory('モザイク', `${size}px → ${cnt}px${selInfo > 0 ? ` [${selInfo}選択]` : ''}`);
+    };
     // ===== Border Toggle =====
     const toggleBorderBtn = $('toggleBorder');
     const updateBorder = () => {
@@ -1972,4 +2049,3 @@
   </script>
 </body>
 </html>
-
