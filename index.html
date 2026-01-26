@@ -46,11 +46,11 @@
         .hidden { display: none; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header h1 { color: var(--text); font-size: 24px; }
-        .theme-btn { background: var(--card-bg); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; }
+        .theme-btn { background: var(--card-bg); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; color: var(--text); }
         .theme-btn:hover { transform: scale(1.1); }
         .help-btn { background: var(--card-bg); border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text); font-weight: 600; }
         .help-btn:hover { background: var(--accent); color: #fff; }
-        .help-panel { position: fixed; top: 0; right: 0; width: 320px; height: 100vh; background: var(--container-bg); box-shadow: -5px 0 30px rgba(0,0,0,0.3); z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto; }
+        .help-panel { position: fixed; top: 0; right: 0; width: 360px; height: 100vh; background: var(--container-bg); box-shadow: -5px 0 30px rgba(0,0,0,0.3); z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto; }
         .help-panel.show { transform: translateX(0); }
         .help-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--container-bg); z-index: 1; }
         .help-panel-header h2 { color: var(--text); font-size: 16px; display: flex; align-items: center; gap: 8px; margin: 0; }
@@ -100,6 +100,8 @@
         .canvas-container.hand:active { cursor: grabbing; }
         .lasso-clear { position: absolute; bottom: 10px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(255, 153, 0, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
         .lasso-clear:hover { background: rgba(255, 120, 0, 1); }
+        .lasso-confirm { position: absolute; bottom: 50px; right: 10px; padding: 6px 12px; font-size: 12px; background: rgba(0, 204, 102, 0.9); color: #fff; border: none; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
+        .lasso-confirm:hover { background: rgba(0, 180, 90, 1); }
         .zoom-row { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 6px; }
         .zoom-row input[type="range"] { width: 60px; }
         .zoom-row span { font-size: 11px; color: var(--text-sub); min-width: 40px; }
@@ -186,7 +188,7 @@
                             <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
                         </div>
                         <p class="info" id="modeInfo"><span class="icon icon-sm">lightbulb</span> クリックで色を取得</p>
-                        <div class="canvas-container" id="workContainer"><canvas id="workCvs"></canvas><button class="lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button></div>
+                        <div class="canvas-container" id="workContainer"><canvas id="workCvs"></canvas><svg id="selectionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></svg><button class="lasso-confirm" id="lassoConfirm" style="display:none;"><span class="icon icon-sm">check</span> 確定</button><button class="lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button></div>
                         <div class="zoom-row">
                             <span class="icon icon-sm">zoom_out</span>
                             <input type="range" id="workZoom" min="10" max="400" value="100">
@@ -194,6 +196,9 @@
                             <span id="workZoomVal">100%</span>
                             <button id="workFit">フィット</button>
                             <span style="font-size:10px;color:var(--text-muted)">スクロールでズーム</span>
+                        </div>
+                        <div class="selection-controls" id="selectionControls" style="display: none; gap: 8px; justify-content: center; margin-top: 10px;">
+                            <span id="selectionCount" style="font-size: 11px; color: var(--text-muted); align-self: center;"></span>
                         </div>
                     </div>
                 </div>
@@ -219,13 +224,16 @@
             <div style="margin-bottom: 12px;">
                 <button class="btn-dl" id="dl" style="width: 100%;"><span class="icon icon-sm">download</span> PNGダウンロード</button>
             </div>
+            <div style="margin-bottom: 12px;">
+                <button class="btn-copy" id="copy" style="width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;"><span class="icon icon-sm">content_copy</span> クリップボードにコピー</button>
+            </div>
             <div class="card" style="margin-bottom: 12px;">
                 <h4><span class="icon icon-sm">straighten</span> 出力サイズ</h4>
                 <div class="row"><input type="number" id="outW" min="1" max="4096"><span>×</span><input type="number" id="outH" min="1" max="4096" readonly></div>
             </div>
             <h4><span class="icon icon-sm">history</span> 編集履歴</h4>
             <div class="history" id="hist"></div>
-            <button class="btn-reset" id="reset" style="width: 100%; margin-top: 10px; background: #e0e0e0;"><span class="icon icon-sm">refresh</span> リセット</button>
+            <button class="btn-reset" id="reset" style="width: 100%; margin-top: 10px; background: var(--item-hover); color: var(--text); border: 1px solid var(--border);"><span class="icon icon-sm">refresh</span> リセット</button>
         </div>
     </div>
     <div class="help-panel" id="helpPanel">
@@ -274,6 +282,26 @@
                     <li>編集操作は自動で履歴に保存</li>
                     <li>履歴をクリックで過去の状態に戻る</li>
                     <li>✕ボタンで履歴を削除（元画像以外）</li>
+                    <li><b>Ctrl+Z</b>: 元に戻す（Undo）</li>
+                    <li><b>Ctrl+Shift+Z</b> / <b>Ctrl+Y</b>: やり直し（Redo）</li>
+                </ul>
+            </div>
+            <div class="help-section">
+                <h3><span class="icon icon-sm">select_all</span> 選択範囲</h3>
+                <ul>
+                    <li><b>矩形選択</b>: ドラッグで四角形を選択</li>
+                    <li><b>投げ縄</b>: クリックで頂点を追加、3点以上で自動確定</li>
+                    <li><b>Ctrl押下</b>: 追加モード（複数の選択範囲を作成）</li>
+                    <li><b>クリアボタン</b>: 全ての選択範囲を解除</li>
+                    <li>選択範囲がある場合、編集は選択範囲内のみに適用</li>
+                </ul>
+            </div>
+            <div class="help-section">
+                <h3><span class="icon icon-sm">download</span> 出力</h3>
+                <ul>
+                    <li><b>PNGダウンロード</b>: 編集結果をファイルとして保存</li>
+                    <li><b>クリップボードにコピー</b>: 編集結果をコピー</li>
+                    <li><b>出力サイズ</b>: 幅を指定（高さは自動計算）</li>
                 </ul>
             </div>
         </div>
@@ -300,8 +328,10 @@
         let origImg = null, history = [], idx = -1, ratio = 1;
         let crop = { start: null, end: null, active: false, shift: false };
         let mode = 'pick';
-        let selection = null;
+        let selections = []; // 複数選択範囲を格納する配列
+        let currentSelection = null; // 現在編集中の選択範囲
         let lassoPoints = [];
+        let addMode = false; // 選択範囲追加モード
         let lassoActive = false;
         let dark = localStorage.getItem('dark') === '1';
         let zoomOrig = 100, zoomWork = 100;
@@ -512,7 +542,7 @@
             ratio = img.width / img.height;
             el.outW.value = img.width; el.outH.value = img.height;
             history = []; idx = -1;
-            selection = null;
+            selections = []; currentSelection = null; addMode = false;
             panOrig = { x: 0, y: 0 }; panWork = { x: 0, y: 0 };
             
             // 初期状態でフィット
@@ -533,21 +563,72 @@
         el.file.onchange = e => load(e.target.files[0]);
         document.onpaste = e => { for (const item of e.clipboardData.items) if (item.type.startsWith('image/')) { load(item.getAsFile()); break; } };
 
+        // 投げ縄SVGオーバーレイ更新
+        const updateLassoOverlay = () => {
+            const svg = $('selectionOverlay');
+            if (mode !== 'lasso' || lassoPoints.length === 0) {
+                svg.innerHTML = '';
+                return;
+            }
+            const containerRect = el.workContainer.getBoundingClientRect();
+            const cvsRect = el.workCvs.getBoundingClientRect();
+            const scale = zoomWork / 100;
+            const offsetX = cvsRect.left - containerRect.left;
+            const offsetY = cvsRect.top - containerRect.top;
+            const pts = lassoPoints.map(p => ({
+                x: offsetX + p.x * scale,
+                y: offsetY + p.y * scale
+            }));
+            let pathD = `M ${pts[0].x} ${pts[0].y}`;
+            for (let i = 1; i < pts.length; i++) {
+                pathD += ` L ${pts[i].x} ${pts[i].y}`;
+            }
+            if (pts.length >= 3) pathD += ' Z';
+            let circles = pts.map((p, i) => 
+                `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${i === 0 ? '#ff5500' : '#ff9900'}" stroke="#fff" stroke-width="1"/>`
+            ).join('');
+            svg.innerHTML = `
+                <path d="${pathD}" fill="${pts.length >= 3 ? 'rgba(255, 153, 0, 0.15)' : 'none'}" stroke="#ff9900" stroke-width="2" stroke-dasharray="6,3" filter="drop-shadow(0 0 2px #000)"/>
+                ${circles}
+            `;
+        };
         // Mode Switch
         const redrawWork = () => {
             if (idx < 0) return;
             workCtx.putImageData(history[idx].data, 0, 0);
-            // 矩形選択の描画
-            if (selection && selection.type !== 'lasso') {
+            // 確定済みの全選択範囲を描画
+            selections.forEach((sel, idx) => {
+                const hue = (idx * 60) % 360; // 各選択範囲に異なる色を割り当て
+                if (sel.type === 'lasso') {
+                    const pts = sel.points;
+                    workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
+                    workCtx.beginPath();
+                    workCtx.moveTo(pts[0].x, pts[0].y);
+                    for (let i = 1; i < pts.length; i++) workCtx.lineTo(pts[i].x, pts[i].y);
+                    workCtx.closePath();
+                    workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
+                    workCtx.fill();
+                    workCtx.stroke();
+                    workCtx.setLineDash([]);
+                } else {
+                    workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
+                    workCtx.strokeRect(sel.x, sel.y, sel.w, sel.h);
+                    workCtx.setLineDash([]);
+                    workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
+                    workCtx.fillRect(sel.x, sel.y, sel.w, sel.h);
+                }
+            });
+            // 現在編集中の矩形選択の描画
+            if (currentSelection && currentSelection.type !== 'lasso') {
                 workCtx.strokeStyle = '#00cc66'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                workCtx.strokeRect(selection.x, selection.y, selection.w, selection.h);
+                workCtx.strokeRect(currentSelection.x, currentSelection.y, currentSelection.w, currentSelection.h);
                 workCtx.setLineDash([]);
                 workCtx.fillStyle = 'rgba(0, 204, 102, 0.15)';
-                workCtx.fillRect(selection.x, selection.y, selection.w, selection.h);
+                workCtx.fillRect(currentSelection.x, currentSelection.y, currentSelection.w, currentSelection.h);
             }
-            // 投げ縄選択の描画（確定済み）
-            if (selection && selection.type === 'lasso' && selection.points) {
-                const pts = selection.points;
+            // 現在編集中の投げ縄選択の描画（確定済み）
+            if (currentSelection && currentSelection.type === 'lasso' && currentSelection.points) {
+                const pts = currentSelection.points;
                 workCtx.strokeStyle = '#ff9900'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
                 workCtx.beginPath();
                 workCtx.moveTo(pts[0].x, pts[0].y);
@@ -559,7 +640,7 @@
                 workCtx.setLineDash([]);
             }
             // 投げ縄の描画中（未確定）
-            if (lassoPoints.length > 0 && (!selection || selection.type !== 'lasso')) {
+            if (lassoPoints.length > 0 && (!currentSelection || currentSelection.type !== 'lasso')) {
                 workCtx.strokeStyle = '#ff9900'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
                 workCtx.beginPath();
                 workCtx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
@@ -575,6 +656,19 @@
         };
 
         const lassoClearBtn = $('lassoClear');
+        const lassoConfirmBtn = $('lassoConfirm');
+        
+        const selectionCountSpan = $('selectionCount');
+        const selectionControlsDiv = $('selectionControls');
+        const updateSelectionCount = () => {
+            const cnt = selections.length;
+            selectionCountSpan.textContent = cnt > 0 ? `${cnt}個の選択範囲` : '';
+        };
+        const updateLassoButtons = () => {
+            const showConfirm = mode === 'lasso' && addMode && lassoPoints.length >= 3;
+            lassoConfirmBtn.style.display = showConfirm ? 'block' : 'none';
+            lassoClearBtn.style.display = (mode === 'lasso' || mode === 'select') ? 'block' : 'none';
+        };
         const setMode = m => {
             mode = m;
             el.modePick.classList.toggle('active', m === 'pick');
@@ -582,24 +676,93 @@
             el.modeSelect.classList.toggle('active', m === 'select');
             el.modeLasso.classList.toggle('active', m === 'lasso');
             el.modeHand.classList.toggle('active', m === 'hand');
-            lassoClearBtn.style.display = m === 'lasso' ? 'block' : 'none';
-            el.workCvs.className = m;
+            // 選択コントロールは矩形選択と投げ縄のときだけ表示
+            selectionControlsDiv.style.display = (m === 'select' || m === 'lasso') ? 'flex' : 'none';
+            updateLassoButtons();
             el.workContainer.classList.toggle('hand', m === 'hand');
+            updateModeInfo();
             el.origContainer.classList.add('hand');
+            el.workCvs.className = m;
+            // モード切替時は現在編集中の選択のみクリア（確定済みの選択範囲は保持）
+            currentSelection = null; lassoPoints = []; updateLassoOverlay(); redrawWork();
+        };
+        // 投げ縄確定ボタン
+        lassoConfirmBtn.onclick = e => {
+            e.stopPropagation(); // クリックイベントの伝播を止める
+            if (lassoPoints.length >= 3) {
+                const newSel = { type: 'lasso', points: [...lassoPoints] };
+                selections.push(newSel);
+                currentSelection = null;
+                lassoPoints = [];
+                updateSelectionCount();
+                updateLassoOverlay();
+                updateLassoButtons();
+                redrawWork();
+            }
+        };
+        // Ctrlキーで追加モード切り替え
+        let ctrlPressed = false;
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Control' && !ctrlPressed) {
+                ctrlPressed = true;
+                addMode = true;
+                // 現在の選択を確定して追加
+                if (currentSelection) {
+                    selections.push(currentSelection);
+                    currentSelection = null;
+                    updateSelectionCount();
+                    redrawWork();
+                }
+                updateLassoButtons();
+                updateModeInfo();
+            }
+        });
+        document.addEventListener('keyup', e => {
+            if (e.key === 'Control') {
+                ctrlPressed = false;
+                addMode = false;
+                updateLassoButtons();
+                updateModeInfo();
+            }
+        });
+        // Undo/Redo キーボードショートカット
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Redo: Ctrl+Shift+Z
+                    if (idx < history.length - 1) goTo(idx + 1);
+                } else {
+                    // Undo: Ctrl+Z
+                    if (idx > 0) goTo(idx - 1);
+                }
+            }
+            // Redo: Ctrl+Y (代替)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                if (idx < history.length - 1) goTo(idx + 1);
+            }
+        });
+        const updateModeInfo = () => {
             const info = { 
                 pick: '<span class="icon icon-sm">lightbulb</span> クリックで色を取得', 
                 crop: '<span class="icon icon-sm">lightbulb</span> ドラッグでトリミング（Shift: 正方形）', 
-                select: '<span class="icon icon-sm">lightbulb</span> ドラッグで矩形選択',
-                lasso: '<span class="icon icon-sm">lightbulb</span> クリックで頂点追加（3点以上で自動確定）',
+                select: '<span class="icon icon-sm">lightbulb</span> ドラッグで矩形選択（Ctrl押下で追加モード）' + (addMode ? ' <b style="color:var(--accent)">[追加モード]</b>' : ''),
+                lasso: '<span class="icon icon-sm">lightbulb</span> クリックで頂点追加（Ctrl押下で追加モード）' + (addMode ? ' <b style="color:var(--accent)">[追加モード]</b>' : ''),
                 hand: '<span class="icon icon-sm">lightbulb</span> ドラッグで画像を移動'
             };
-            el.modeInfo.innerHTML = info[m];
-            if (m !== 'select' && m !== 'lasso') { selection = null; lassoPoints = []; redrawWork(); }
+            el.modeInfo.innerHTML = info[mode];
         };
+        
         lassoClearBtn.onclick = () => {
+            // 投げ縄・矩形選択モードでは全選択解除も兼ねる
+            selections = [];
+            currentSelection = null;
             lassoPoints = [];
-            selection = null;
+            updateSelectionCount();
             redrawWork();
+            updateLassoOverlay();
+            updateLassoButtons();
         };
         el.modePick.onclick = () => setMode('pick');
         el.modeCrop.onclick = () => setMode('crop');
@@ -611,7 +774,9 @@
         // Work canvas interactions
         let workDragging = false, workStartMouse = null, workStartPan = null;
         
-        el.workCvs.onmousedown = e => {
+        // コンテナ全体でマウスイベントをキャプチャ（画像外からの選択を許可）
+        el.workContainer.onmousedown = e => {
+            if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
             if (mode === 'hand') {
                 workDragging = true;
                 workStartMouse = { x: e.clientX, y: e.clientY };
@@ -626,6 +791,7 @@
                 };
                 crop.active = true; 
                 crop.shift = e.shiftKey; 
+                e.preventDefault();
             }
         };
         
@@ -643,7 +809,7 @@
             workStartMouse = null;
         });
 
-        el.workCvs.onmousemove = e => {
+        el.workContainer.onmousemove = e => {
             if ((mode !== 'crop' && mode !== 'select') || !crop.active) return;
             crop.shift = e.shiftKey;
             const rect = el.workCvs.getBoundingClientRect();
@@ -660,20 +826,36 @@
             }
             crop.end = end;
             workCtx.putImageData(history[idx].data, 0, 0);
-            workCtx.strokeStyle = mode === 'crop' ? '#ff4444' : '#00cc66'; 
-            workCtx.lineWidth = 3; 
-            workCtx.setLineDash([10, 5]);
-            workCtx.shadowColor = '#000'; 
-            workCtx.shadowBlur = 2;
-            workCtx.strokeRect(crop.start.x, crop.start.y, crop.end.x - crop.start.x, crop.end.y - crop.start.y);
+            // SVGオーバーレイで選択範囲を描画（画像外も表示可能）
+            const svg = $('selectionOverlay');
+            const containerRect = el.workContainer.getBoundingClientRect();
+            const cvsRect = el.workCvs.getBoundingClientRect();
+            const offsetX = cvsRect.left - containerRect.left;
+            const offsetY = cvsRect.top - containerRect.top;
+            const x1 = offsetX + Math.min(crop.start.x, crop.end.x) * scale;
+            const y1 = offsetY + Math.min(crop.start.y, crop.end.y) * scale;
+            const w = Math.abs(crop.end.x - crop.start.x) * scale;
+            const h = Math.abs(crop.end.y - crop.start.y) * scale;
+            const color = mode === 'crop' ? '#ff4444' : '#00cc66';
+            svg.innerHTML = `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="10,5" filter="drop-shadow(0 0 2px #000)"/>`;
         };
         
-        el.workCvs.onmouseup = () => {
+        el.workContainer.onmouseup = () => {
             if (crop.active && crop.end && Math.abs(crop.end.x - crop.start.x) > 10 && Math.abs(crop.end.y - crop.start.y) > 10) {
-                const x = Math.round(Math.min(crop.start.x, crop.end.x));
-                const y = Math.round(Math.min(crop.start.y, crop.end.y));
-                const w = Math.round(Math.abs(crop.end.x - crop.start.x));
-                const h = Math.round(Math.abs(crop.end.y - crop.start.y));
+                const imgW = el.workCvs.width, imgH = el.workCvs.height;
+                // 画像範囲内にクリップ
+                let x1 = Math.min(crop.start.x, crop.end.x);
+                let y1 = Math.min(crop.start.y, crop.end.y);
+                let x2 = Math.max(crop.start.x, crop.end.x);
+                let y2 = Math.max(crop.start.y, crop.end.y);
+                // クリップして画像範囲内に収める
+                x1 = Math.max(0, Math.min(x1, imgW));
+                y1 = Math.max(0, Math.min(y1, imgH));
+                x2 = Math.max(0, Math.min(x2, imgW));
+                y2 = Math.max(0, Math.min(y2, imgH));
+                const x = Math.round(x1), y = Math.round(y1);
+                const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
+                if (w <= 0 || h <= 0) { crop = { start: null, end: null, active: false }; if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0); return; }
                 if (mode === 'crop') {
                     const data = history[idx].data;
                     const srcW = history[idx].w;
@@ -696,42 +878,62 @@
                     fitWorkZoom();
                     save('トリミング', `(${x},${y})→${w}×${h}`);
                 } else if (mode === 'select') {
-                    selection = { x, y, w, h };
-                    workCtx.putImageData(history[idx].data, 0, 0);
-                    workCtx.strokeStyle = '#00cc66'; workCtx.lineWidth = 2; workCtx.setLineDash([6, 3]);
-                    workCtx.strokeRect(selection.x, selection.y, selection.w, selection.h);
-                    workCtx.setLineDash([]);
-                    workCtx.fillStyle = 'rgba(0, 204, 102, 0.15)';
-                    workCtx.fillRect(selection.x, selection.y, selection.w, selection.h);
+                    const newSel = { type: 'rect', x, y, w, h };
+                    if (addMode) {
+                        // 追加モード: 確定済みリストに追加
+                        selections.push(newSel);
+                        currentSelection = null;
+                        updateSelectionCount();
+                    } else {
+                        // 通常モード: 現在の選択として設定
+                        currentSelection = newSel;
+                    }
+                    redrawWork();
                 }
             } else {
                 // ドラッグキャンセル時は元に戻す
                 if (idx >= 0) workCtx.putImageData(history[idx].data, 0, 0);
             }
             crop = { start: null, end: null, active: false };
+            // SVGオーバーレイをクリア
+            $('selectionOverlay').innerHTML = '';
         };
 
         let lastClickTime = 0;
-        el.workCvs.onclick = e => {
+        el.workContainer.onclick = e => {
+            if (e.target === lassoClearBtn || lassoClearBtn.contains(e.target)) return;
             const now = Date.now();
             const rect = el.workCvs.getBoundingClientRect();
             const scale = zoomWork / 100;
             const x = Math.floor((e.clientX - rect.left) / scale);
             const y = Math.floor((e.clientY - rect.top) / scale);
             if (mode === 'pick') {
-                const p = workCtx.getImageData(x, y, 1, 1).data;
-                const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
-                el.tColor.value = hex;
-                el.rFrom.value = hex;
+                // カラーピッカーは画像範囲内のみ
+                const imgW = el.workCvs.width, imgH = el.workCvs.height;
+                if (x >= 0 && x < imgW && y >= 0 && y < imgH) {
+                    const p = workCtx.getImageData(x, y, 1, 1).data;
+                    const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+                    el.tColor.value = hex;
+                    el.rFrom.value = hex;
+                }
             } else if (mode === 'lasso') {
-                // 点を追加（3点以上なら自動確定）
+                // 点を追加 - 画像外も許可
                 lassoPoints.push({ x, y });
                 if (lassoPoints.length >= 3) {
-                    selection = { type: 'lasso', points: [...lassoPoints] };
+                    if (addMode) {
+                        // 追加モード: 確定ボタンで追加（自動確定しない）
+                        currentSelection = null;
+                    } else {
+                        // 通常モード: 現在の選択として設定
+                        const newSel = { type: 'lasso', points: [...lassoPoints] };
+                        currentSelection = newSel;
+                    }
                 } else {
-                    selection = null;
+                    currentSelection = null;
                 }
                 redrawWork();
+                updateLassoOverlay();
+                updateLassoButtons();
             }
             lastClickTime = now;
         };
@@ -751,9 +953,16 @@
             return inside;
         };
         const inSelection = (px, py) => {
-            if (!selection) return true;
-            if (selection.type === 'lasso') return pointInPolygon(px, py, selection.points);
-            return px >= selection.x && px < selection.x + selection.w && py >= selection.y && py < selection.y + selection.h;
+            // 選択範囲がない場合は全体が対象
+            const allSelections = currentSelection ? [...selections, currentSelection] : selections;
+            if (allSelections.length === 0) return true;
+            // いずれかの選択範囲に含まれていればtrue
+            return allSelections.some(sel => {
+                if (sel.type === 'lasso') {
+                    return pointInPolygon(px, py, sel.points);
+                }
+                return px >= sel.x && px < sel.x + sel.w && py >= sel.y && py < sel.y + sel.h;
+            });
         };
 
         $('applyT').onclick = () => {
@@ -773,9 +982,11 @@
                 }
             }
             workCtx.putImageData(img, 0, 0);
-            const selInfo = selection ? (selection.type === 'lasso' ? ' [投げ縄]' : ' [矩形]') : '';
+            const allSels = currentSelection ? [...selections, currentSelection] : selections;
+            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
             const modeInfo = all ? '全体' : `${el.tColor.value} 許容${tol}`;
-            selection = null; lassoPoints = [];
+            selections = []; currentSelection = null; lassoPoints = [];
+            updateSelectionCount();
             save('透過', `${modeInfo} → ${cnt}px${selInfo}`);
         };
 
@@ -796,8 +1007,10 @@
                 }
             }
             workCtx.putImageData(img, 0, 0);
-            const selInfo = selection ? ` [選択範囲]` : '';
-            selection = null; lassoPoints = [];
+            const allSels = currentSelection ? [...selections, currentSelection] : selections;
+            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
+            selections = []; currentSelection = null; lassoPoints = [];
+            updateSelectionCount();
             save('色置換', `${el.rFrom.value}→${el.rTo.value} → ${cnt}px${selInfo}`);
         };
 
@@ -820,13 +1033,31 @@
                 }
             }
             workCtx.putImageData(img, 0, 0);
-            const selInfo = selection ? ` [選択範囲]` : '';
-            selection = null; lassoPoints = [];
+            const allSels = currentSelection ? [...selections, currentSelection] : selections;
+            const selInfo = allSels.length > 0 ? ` [${allSels.length}個の選択範囲]` : '';
+            selections = []; currentSelection = null; lassoPoints = [];
+            updateSelectionCount();
             save('塗りつぶし', `${el.fColor.value} ${only ? '透明のみ' : '不透明'} → ${cnt}px${selInfo}`);
         };
 
         // Reset & Download
         $('reset').onclick = () => { if (origImg) init(origImg); };
+        $('copy').onclick = async () => {
+            const w = +el.outW.value, h = +el.outH.value;
+            const cvs = document.createElement('canvas');
+            cvs.width = w; cvs.height = h;
+            cvs.getContext('2d').drawImage(el.workCvs, 0, 0, w, h);
+            try {
+                const blob = await new Promise(resolve => cvs.toBlob(resolve, 'image/png'));
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                const btn = $('copy');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<span class="icon icon-sm">check</span> コピーしました！';
+                setTimeout(() => btn.innerHTML = orig, 2000);
+            } catch (err) {
+                alert('クリップボードへのコピーに失敗しました');
+            }
+        };
         $('dl').onclick = () => {
             const w = +el.outW.value, h = +el.outH.value;
             const cvs = document.createElement('canvas');
