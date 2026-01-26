@@ -11,8 +11,8 @@
     
     :root {
       --bg-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-      --surface: #ffffff;
-      --surface-alt: #f8fafc;
+      --surface: #cbd5e1;
+      --surface-alt: #eef2f7;
       --surface-hover: #f1f5f9;
       --text-primary: #1e293b;
       --text-secondary: #64748b;
@@ -272,9 +272,12 @@
     }
     
     .card-footer {
-      margin-top: 14px;
-      display: flex;
-      justify-content: flex-end;
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+    }
+    .card {
+      padding-bottom: 50px;
     }
 
     /* ===== Form Controls ===== */
@@ -345,33 +348,76 @@
       font-weight: 600;
       color: var(--accent);
     }
-
-    /* ===== Mode Buttons ===== */
-    .mode-toolbar {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-    
-    .mode-btn {
-      padding: 8px 16px;
-      background: var(--surface-alt);
-      color: var(--text-secondary);
-      border: 2px solid transparent;
-      border-radius: var(--radius-md);
+    .tol-input {
+      width: 50px;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       font-size: 12px;
+      font-weight: 600;
+      background: var(--surface);
+      color: var(--accent);
+      text-align: center;
     }
+    .tol-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .output-height-readonly {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+		/* ===== Mode Buttons (Browser Tab Style) ===== */
+		.mode-toolbar {
+		  display: flex;
+		  gap: 0;
+		  align-items: stretch;
+		  justify-content: flex-start;
+		  padding-left: 20px;
+		  padding-right: 20px;
+		  flex-wrap: nowrap;
+		  margin-bottom: 0;
+		  position: relative;
+		  z-index: 1;
+		}
+		
+		.mode-btn {
+		  padding: 0 16px;
+		  height: 38px;
+		  background: var(--surface-alt);
+		  color: var(--text-secondary);
+		  border: 1px solid var(--border);
+		  border-bottom: none;
+		  border-radius: var(--radius-md) var(--radius-md) 0 0;
+		  font-size: 12px;
+		  margin-right: -1px;
+		  position: relative;
+		  top: 1px;
+		}
+		
     .mode-btn:hover {
       background: var(--surface-hover);
       color: var(--text-primary);
     }
-    .mode-btn.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: white;
-      border-color: transparent;
-    }
+		.mode-btn.active {
+		  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+		  color: white;
+		  border-color: var(--accent);
+		  border-bottom: 1px solid var(--surface);
+		  z-index: 3;
+		  font-weight: 600;
+		  box-shadow: 0 -2px 10px rgba(99, 102, 241, 0.3);
+		}
+		
+		.canvas-container {
+		  border: 1px solid var(--border);
+		  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+		  position: relative;
+		  z-index: 2;
+		}
 
     /* ===== Canvas Area ===== */
     .canvas-section {
@@ -390,14 +436,18 @@
     }
     
     .canvas-hint {
-      text-align: center;
+      position: relative;
+      margin-top: 12px;
       font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
+      color: var(--text-secondary);
+      background: var(--surface-alt);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
+      border: 1px solid var(--border);
     }
     
     .canvas-container {
@@ -414,6 +464,7 @@
     .canvas-container canvas {
       display: block;
       transform-origin: center center;
+      /* border controlled by JS */
     }
     .canvas-container.hand { cursor: grab; }
     .canvas-container.hand:active { cursor: grabbing; }
@@ -529,6 +580,21 @@
       background: var(--surface);
       color: var(--text-primary);
       border: 1px solid var(--border);
+    }
+    .border-toggle {
+      padding: 6px 12px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      border: 2px solid var(--border);
+    }
+    .border-toggle.active {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    }
+    .border-toggle:hover {
+      transform: scale(1.02);
     }
     .zoom-hint {
       font-size: 10px;
@@ -741,11 +807,11 @@
               <div class="form-row">
                 <label>許容値</label>
                 <input type="range" id="tTol" min="0" max="255" value="30">
-                <span class="range-value" id="tTolVal">30</span>
+                <input type="number" class="tol-input" id="tTolVal" value="30" min="0" max="255">
               </div>
               <div class="form-row">
                 <input type="checkbox" id="tAll">
-                <label style="min-width:auto">選択範囲全体を透過</label>
+                <label for="tAll" style="min-width:auto;cursor:pointer">選択範囲全体を透過</label>
               </div>
             </div>
             <div class="card-footer">
@@ -764,7 +830,7 @@
               <div class="form-row">
                 <label>許容値</label>
                 <input type="range" id="rTol" min="0" max="255" value="30">
-                <span class="range-value" id="rTolVal">30</span>
+                <input type="number" class="tol-input" id="rTolVal" value="30" min="0" max="255">
               </div>
             </div>
             <div class="card-footer">
@@ -781,7 +847,7 @@
               </div>
               <div class="form-row">
                 <input type="checkbox" id="fOnly">
-                <label style="min-width:auto">透明部分のみ</label>
+                <label for="fOnly" style="min-width:auto;cursor:pointer">透明部分のみ</label>
               </div>
             </div>
             <div class="card-footer">
@@ -800,18 +866,24 @@
             <button class="mode-btn" id="modeSelect"><span class="icon icon-sm">select_all</span> 矩形選択</button>
             <button class="mode-btn" id="modeLasso"><span class="icon icon-sm">gesture</span> 投げ縄</button>
             <button class="mode-btn" id="modeMagic"><span class="icon icon-sm">auto_fix_high</span> 自動選択</button>
+            <div class="magic-tolerance" id="magicTolWrap" style="display:none;align-items:center;gap:6px;padding:0 10px;height:38px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+              <label style="font-size:11px;color:var(--text-secondary)">許容値</label>
+              <input type="range" id="mTol" min="0" max="255" value="30" style="width:100px">
+              <input type="number" class="tol-input" id="mTolVal" value="30" min="0" max="255" style="width:60px">
+            </div>
+            <div style="flex:1"></div>
             <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
           </div>
-          
-          <div class="canvas-hint" id="modeHint"><span class="icon icon-sm">lightbulb</span>クリックで色を取得</div>
-          
+                    
           <div class="canvas-container" id="workContainer">
             <canvas id="workCvs"></canvas>
             <svg id="overlay"></svg>
             <button class="canvas-btn crop-confirm" id="cropConfirm"><span class="icon icon-sm">check</span> 確定</button>
             <button class="canvas-btn lasso-confirm" id="lassoConfirm"><span class="icon icon-sm">check</span> 確定</button>
+            <button class="canvas-btn" id="invertSelection" style="bottom:56px;background:rgba(99,102,241,0.9);color:white;display:none"><span class="icon icon-sm">flip</span> 反転</button>
             <button class="canvas-btn lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button>
           </div>
+          <div class="canvas-hint" id="modeHint"><span class="icon icon-sm">lightbulb</span>クリックで色を取得</div>
           <!-- Color Picker Loupe -->
           <div class="picker-loupe" id="pickerLoupe">
             <canvas id="loupeCvs" width="60" height="60"></canvas>
@@ -822,6 +894,7 @@
           </div>
           
           <div class="zoom-controls">
+            <button id="toggleBorder" class="border-toggle active"><span class="icon icon-sm">border_style</span> 境界線</button>
             <span class="icon icon-sm">zoom_out</span>
             <input type="range" id="workZoom" min="10" max="400" value="100">
             <span class="icon icon-sm">zoom_in</span>
@@ -868,7 +941,7 @@
         <div class="form-row">
           <input type="number" id="outW" min="1" max="4096">
           <span style="color:var(--text-muted)">×</span>
-          <input type="number" id="outH" min="1" max="4096" readonly>
+          <input type="text" id="outH" readonly class="output-height-readonly">
         </div>
       </div>
 
@@ -984,6 +1057,7 @@
       // Buttons
       modePick: $('modePick'), modeCrop: $('modeCrop'), 
       modeSelect: $('modeSelect'), modeLasso: $('modeLasso'), modeMagic: $('modeMagic'), modeHand: $('modeHand'),
+      mTol: $('mTol'), mTolVal: $('mTolVal'), magicTolWrap: $('magicTolWrap'),
       cropConfirm: $('cropConfirm'), lassoConfirm: $('lassoConfirm'), lassoClear: $('lassoClear'),
       toggleOrig: $('toggleOrig')
     };
@@ -994,6 +1068,7 @@
     // ===== State =====
     const state = {
       origImg: null,
+      showBorder: true,
       history: [],
       historyIdx: -1,
       ratio: 1,
@@ -1241,10 +1316,14 @@
       ({ pick: DOM.modePick, crop: DOM.modeCrop, select: DOM.modeSelect, lasso: DOM.modeLasso, magic: DOM.modeMagic, hand: DOM.modeHand })[m].classList.add('active');
       DOM.workContainer.classList.toggle('hand', m === 'hand');
       DOM.workCvs.className = m;
+      DOM.magicTolWrap.style.display = (m === 'magic') ? 'flex' : 'none';
       updateModeHint();
       updateButtons();
+      // Clear all selections when switching modes
+      state.selections = [];
       state.currentSelection = null;
       state.lassoPoints = [];
+      DOM.tAll.checked = false;
       DOM.overlay.innerHTML = '';
       if (state.historyIdx >= 0) {
         workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
@@ -1261,7 +1340,10 @@
 
     const updateButtons = () => {
       DOM.lassoConfirm.style.display = (state.mode === 'lasso' && state.addMode && state.lassoPoints.length >= 3) ? 'block' : 'none';
-      DOM.lassoClear.style.display = (state.mode === 'lasso' || state.mode === 'select' || state.mode === 'magic') ? 'block' : 'none';
+      const isSelectionMode = state.mode === 'lasso' || state.mode === 'select' || state.mode === 'magic';
+      DOM.lassoClear.style.display = isSelectionMode ? 'block' : 'none';
+      const invertBtn = $('invertSelection');
+      if (invertBtn) invertBtn.style.display = isSelectionMode ? 'block' : 'none';
       DOM.cropConfirm.style.display = (state.mode === 'crop' && state.crop.start && state.crop.end) ? 'block' : 'none';
     };
 
@@ -1271,6 +1353,8 @@
     DOM.modeLasso.onclick = () => setMode('lasso');
     DOM.modeMagic.onclick = () => setMode('magic');
     DOM.modeHand.onclick = () => setMode('hand');
+    DOM.mTol.oninput = () => DOM.mTolVal.value = DOM.mTol.value;
+    DOM.mTolVal.oninput = () => { DOM.mTol.value = Math.max(0, Math.min(255, +DOM.mTolVal.value || 0)); };
     setMode('pick');
     // ===== Magic Wand (Flood Fill Selection) =====
     const floodFillSelect = (startX, startY, tolerance) => {
@@ -1381,6 +1465,9 @@
     const redrawCanvas = () => {
       if (state.historyIdx < 0) return;
       workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
+      // Auto-toggle "tAll" checkbox based on selection state
+      const hasSelection = state.selections.length > 0 || state.currentSelection !== null || state.lassoPoints.length >= 3;
+      DOM.tAll.checked = hasSelection;
       
       // Draw selections
       const drawSelection = (sel, hue) => {
@@ -1397,9 +1484,15 @@
           workCtx.fill();
           workCtx.stroke();
         } else if (sel.type === 'magic') {
-          // Draw each selected pixel
-          workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.4)`;
-          sel.pixels.forEach(p => workCtx.fillRect(p.x, p.y, 1, 1));
+          // Draw diagonal stripes pattern for magic selection (use pixelSet for performance)
+          const stripeSize = 4;
+          const imgW = DOM.workCvs.width;
+          sel.pixelSet.forEach(idx => {
+            const x = idx % imgW, y = Math.floor(idx / imgW);
+            const isStripe = ((x + y) % (stripeSize * 2)) < stripeSize;
+            workCtx.fillStyle = isStripe ? `hsla(${hue}, 80%, 50%, 0.5)` : `hsla(${hue}, 80%, 70%, 0.25)`;
+            workCtx.fillRect(x, y, 1, 1);
+          });
         } else {
           workCtx.fillRect(sel.x, sel.y, sel.w, sel.h);
           workCtx.strokeRect(sel.x, sel.y, sel.w, sel.h);
@@ -1569,6 +1662,7 @@
         }
         state.crop = { start: null, end: null, active: false };
         DOM.overlay.innerHTML = '';
+        DOM.fOnly.checked = false;
         redrawCanvas();
       }
     };
@@ -1593,11 +1687,12 @@
         if (state.lassoPoints.length >= 3 && !state.addMode) {
           state.currentSelection = { type: 'lasso', points: [...state.lassoPoints] };
         }
+        DOM.fOnly.checked = false;
         redrawCanvas();
         updateOverlay();
         updateButtons();
       } else if (state.mode === 'magic') {
-        const tolerance = +DOM.tTol.value; // Reuse tolerance from transparency tool
+        const tolerance = +DOM.mTol.value; // Use magic wand's own tolerance
         const selection = floodFillSelect(x, y, tolerance);
         if (selection) {
           if (state.addMode) {
@@ -1605,14 +1700,26 @@
           } else {
             state.currentSelection = selection;
           }
+          // Auto-check "transparent only" for fill tool if selecting transparent area
+          if (state.historyIdx >= 0) {
+            const imgData = state.history[state.historyIdx].data;
+            const startIdx = (y * imgData.width + x) * 4;
+            if (imgData.data[startIdx + 3] === 0) {
+              DOM.fOnly.checked = true;
+            } else {
+              DOM.fOnly.checked = false;
+            }
+          }
           redrawCanvas();
         }
       }
     };
 
     // ===== Tool Controls =====
-    DOM.tTol.oninput = () => DOM.tTolVal.textContent = DOM.tTol.value;
-    DOM.rTol.oninput = () => DOM.rTolVal.textContent = DOM.rTol.value;
+    DOM.tTol.oninput = () => DOM.tTolVal.value = DOM.tTol.value;
+    DOM.tTolVal.oninput = () => { DOM.tTol.value = Math.max(0, Math.min(255, +DOM.tTolVal.value || 0)); };
+    DOM.rTol.oninput = () => DOM.rTolVal.value = DOM.rTol.value;
+    DOM.rTolVal.oninput = () => { DOM.rTol.value = Math.max(0, Math.min(255, +DOM.rTolVal.value || 0)); };
     DOM.outW.oninput = () => DOM.outH.value = Math.round((+DOM.outW.value || 1) / state.ratio);
 
     // ===== Selection Check =====
@@ -1743,6 +1850,28 @@
       updateOverlay();
       updateButtons();
     };
+    // ===== Invert Selection =====
+    $('invertSelection').onclick = () => {
+      const allSels = state.currentSelection ? [...state.selections, state.currentSelection] : state.selections;
+      if (allSels.length === 0) return;
+      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
+      // Build inverted pixelSet directly (without pixels array for performance)
+      const pixelSet = new Set();
+      for (let i = 0; i < imgW * imgH; i++) {
+        const x = i % imgW, y = Math.floor(i / imgW);
+        if (!inSelection(x, y)) pixelSet.add(i);
+      }
+      state.selections = [];
+      state.currentSelection = {
+        type: 'magic',
+        x: 0, y: 0, w: imgW, h: imgH,
+        pixels: null, // Skip pixels array - use pixelSet only
+        pixelSet: pixelSet
+      };
+      state.lassoPoints = [];
+      redrawCanvas();
+      updateOverlay();
+    };
 
     // ===== Keyboard Shortcuts =====
     document.addEventListener('keydown', e => {
@@ -1781,7 +1910,36 @@
     });
 
     // ===== Reset & Export =====
-    $('resetBtn').onclick = () => { if (state.origImg) initEditor(state.origImg); };
+    $('resetBtn').onclick = () => {
+      if (state.origImg) {
+        // Reset tool settings to defaults
+        DOM.tColor.value = '#ffffff';
+        DOM.tTol.value = 30; DOM.tTolVal.value = '30';
+        DOM.tAll.checked = false;
+        DOM.rFrom.value = '#000000';
+        DOM.rTo.value = '#ff0000';
+        DOM.rTol.value = 30; DOM.rTolVal.value = '30';
+        DOM.fColor.value = '#ff0000';
+        DOM.fOnly.checked = false;
+        DOM.mTol.value = 30; DOM.mTolVal.value = '30';
+        initEditor(state.origImg);
+      }
+    };
+    // Tolerance slider double-click to reset to default
+    DOM.tTol.ondblclick = () => { DOM.tTol.value = 30; DOM.tTolVal.value = '30'; };
+    DOM.rTol.ondblclick = () => { DOM.rTol.value = 30; DOM.rTolVal.value = '30'; };
+    DOM.mTol.ondblclick = () => { DOM.mTol.value = 30; DOM.mTolVal.value = '30'; };
+    // ===== Border Toggle =====
+    const toggleBorderBtn = $('toggleBorder');
+    const updateBorder = () => {
+      DOM.workCvs.style.boxShadow = state.showBorder ? '0 0 0 2px rgba(100, 100, 100, 0.8)' : 'none';
+      toggleBorderBtn.classList.toggle('active', state.showBorder);
+    };
+    toggleBorderBtn.onclick = () => {
+      state.showBorder = !state.showBorder;
+      updateBorder();
+    };
+    updateBorder();
 
     $('copyBtn').onclick = async () => {
       const w = +DOM.outW.value, h = +DOM.outH.value;
