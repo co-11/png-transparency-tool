@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG編集アプリ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        h1 { text-align: center; color: #333; margin-bottom: 20px; font-size: 28px; }
+        .drop-zone { border: 3px dashed #667eea; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8f9ff; margin-bottom: 20px; }
+        .drop-zone:hover, .drop-zone.dragover { background: #eef1ff; border-color: #764ba2; }
+        .drop-zone p { color: #666; font-size: 16px; }
+        .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .tool-card { background: #f5f5f5; border-radius: 12px; padding: 15px; }
+        .tool-card h4 { margin-bottom: 10px; color: #333; }
+        .tool-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+        .tool-row label { font-size: 13px; color: #555; min-width: 60px; }
+        input[type="range"] { flex: 1; min-width: 80px; height: 6px; border-radius: 3px; background: #ddd; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #667eea; cursor: pointer; }
+        input[type="color"] { width: 36px; height: 28px; border: none; border-radius: 6px; cursor: pointer; }
+        input[type="number"] { width: 70px; padding: 6px 8px; border: 2px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .canvas-area { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        .canvas-wrapper { text-align: center; }
+        .canvas-wrapper h3 { margin-bottom: 8px; color: #333; font-size: 14px; }
+        canvas { max-width: 350px; max-height: 350px; border: 1px solid #ddd; border-radius: 8px; background: repeating-conic-gradient(#ccc 0% 25%, white 0% 50%) 50% / 16px 16px; }
+        .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .btn-tool { background: #667eea; color: white; }
+        .btn-tool:hover { background: #5a6fd6; }
+        .btn-reset { background: #e0e0e0; color: #333; }
+        .btn-download { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4); }
+        .hidden { display: none; }
+        .history { background: #f0f0f0; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .history h4 { font-size: 13px; color: #666; margin-bottom: 10px; }
+        .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+        .history-item { display: flex; align-items: center; gap: 10px; background: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .history-item:hover { background: #e8e8e8; }
+        .history-item.active { background: #667eea; color: white; }
+        .history-item.active .history-detail { color: rgba(255,255,255,0.8); }
+        .history-item.active .delete-btn { color: rgba(255,255,255,0.8); }
+        .history-item.active .delete-btn:hover { color: white; background: rgba(255,255,255,0.2); }
+        .history-num { font-weight: bold; min-width: 20px; }
+        .history-info { flex: 1; }
+        .history-label { font-weight: 600; }
+        .history-detail { font-size: 11px; color: #888; margin-top: 2px; }
+        .delete-btn { background: none; border: none; color: #999; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
+        .delete-btn:hover { background: #ff5252; color: white; }
+        .delete-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        #fileInput { display: none; }
+        .info { text-align: center; color: #888; font-size: 12px; margin-bottom: 10px; }
+        .size-row { display: flex; align-items: center; gap: 5px; }
+        .size-row span { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ PNG編集アプリ</h1>
+        <div class="drop-zone" id="dropZone">
+            <p>📁 画像をドラッグ＆ドロップ / クリック / Ctrl+V</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="hidden" id="editor">
+            <div class="history">
+                <h4>📝 編集履歴（クリックでその状態に戻る）</h4>
+                <div class="history-list" id="historyList"></div>
+            </div>
+
+            <div class="tools">
+                <div class="tool-card">
+                    <h4>🔲 透過</h4>
+                    <div class="tool-row">
+                        <label>色</label>
+                        <input type="color" id="transparentColor" value="#ffffff">
+                        <label>許容値</label>
+                        <input type="range" id="transparentTol" min="0" max="255" value="30">
+                        <span id="transparentTolVal">30</span>
+                    </div>
+                    <button class="btn-tool" id="applyTransparent">適用</button>
+                </div>
+
+                <div class="tool-card">
+                    <h4>🎨 色置換</h4>
+                    <div class="tool-row">
+                        <input type="color" id="fromColor" value="#000000">
+                        <span>→</span>
+                        <input type="color" id="toColor" value="#ff0000">
+                        <label>許容値</label>
+                        <input type="range" id="recolorTol" min="0" max="255" value="30">
+                        <span id="recolorTolVal">30</span>
+                    </div>
+                    <button class="btn-tool" id="applyRecolor">適用</button>
+                </div>
+
+                <div class="tool-card">
+                    <h4>🪣 全体塗りつぶし</h4>
+                    <div class="tool-row">
+                        <label>色</label>
+                        <input type="color" id="fillColor" value="#ff0000">
+                        <label>透明部分のみ</label>
+                        <input type="checkbox" id="fillTransparentOnly">
+                    </div>
+                    <button class="btn-tool" id="applyFill">適用</button>
+                </div>
+
+                <div class="tool-card">
+                    <h4>📐 出力サイズ</h4>
+                    <div class="tool-row">
+                        <div class="size-row">
+                            <input type="number" id="outputWidth" min="1" max="4096">
+                            <span>×</span>
+                            <input type="number" id="outputHeight" min="1" max="4096" readonly>
+                        </div>
+                    </div>
+                    <p style="font-size:11px;color:#888;">幅を変更すると高さは自動調整</p>
+                </div>
+            </div>
+
+            <p class="info">💡 元画像をクリックで色取得 / ドラッグでトリミング</p>
+
+            <div class="canvas-area">
+                <div class="canvas-wrapper"><h3>元画像</h3><canvas id="originalCanvas"></canvas></div>
+                <div class="canvas-wrapper"><h3>編集後</h3><canvas id="resultCanvas"></canvas></div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-reset" id="resetBtn">🔄 リセット</button>
+                <button class="btn-download" id="downloadBtn">💾 PNGダウンロード</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const dropZone = $('dropZone'), fileInput = $('fileInput'), editor = $('editor');
+        const originalCanvas = $('originalCanvas'), resultCanvas = $('resultCanvas');
+        const originalCtx = originalCanvas.getContext('2d'), resultCtx = resultCanvas.getContext('2d');
+        const historyList = $('historyList');
+
+        let originalImage = null, history = [], currentIndex = -1;
+        let cropStart = null, cropEnd = null, isCropping = false, aspectRatio = 1;
+
+        // 履歴保存
+        function saveState(label, detail) {
+            const state = resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            // 現在位置以降の履歴を削除
+            history = history.slice(0, currentIndex + 1);
+            history.push({ 
+                data: state, 
+                label, 
+                detail: detail || '',
+                width: resultCanvas.width, 
+                height: resultCanvas.height,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            currentIndex = history.length - 1;
+            updateHistoryUI();
+            syncOriginalCanvas();
+        }
+
+        function syncOriginalCanvas() {
+            const state = history[currentIndex];
+            originalCanvas.width = state.width;
+            originalCanvas.height = state.height;
+            originalCtx.putImageData(state.data, 0, 0);
+        }
+
+        function updateHistoryUI() {
+            historyList.innerHTML = history.map((h, i) => `
+                <div class="history-item ${i === currentIndex ? 'active' : ''}" data-index="${i}">
+                    <span class="history-num">${i + 1}</span>
+                    <div class="history-info">
+                        <div class="history-label">${h.label}</div>
+                        <div class="history-detail">${h.detail} (${h.width}×${h.height}) ${h.timestamp}</div>
+                    </div>
+                    <button class="delete-btn" data-index="${i}" ${i === 0 ? 'disabled' : ''}>✕</button>
+                </div>
+            `).join('');
+
+            // クリックで状態復元
+            historyList.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', e => {
+                    if (e.target.classList.contains('delete-btn')) return;
+                    goToState(+item.dataset.index);
+                });
+            });
+
+            // 削除ボタン
+            historyList.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    deleteState(+btn.dataset.index);
+                });
+            });
+        }
+
+        function goToState(index) {
+            if (index < 0 || index >= history.length) return;
+            currentIndex = index;
+            const state = history[index];
+            resultCanvas.width = state.width;
+            resultCanvas.height = state.height;
+            resultCtx.putImageData(state.data, 0, 0);
+            aspectRatio = state.width / state.height;
+            $('outputWidth').value = state.width;
+            $('outputHeight').value = state.height;
+            updateHistoryUI();
+            syncOriginalCanvas();
+        }
+
+        function deleteState(index) {
+            if (index === 0 || history.length <= 1) return;
+            
+            history.splice(index, 1);
+            
+            // インデックス調整
+            if (currentIndex >= index) {
+                currentIndex = Math.max(0, currentIndex - 1);
+            }
+            
+            // 削除後の状態を再適用
+            goToState(currentIndex);
+        }
+
+        // ファイル読み込み
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); loadFile(e.dataTransfer.files[0]); });
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+        document.addEventListener('paste', e => { for (let item of e.clipboardData.items) if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; } });
+
+        function loadFile(file) {
+            if (!file?.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => { originalImage = img; initEditor(img); };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function initEditor(img) {
+            originalCanvas.width = resultCanvas.width = img.width;
+            originalCanvas.height = resultCanvas.height = img.height;
+            originalCtx.drawImage(img, 0, 0);
+            resultCtx.drawImage(img, 0, 0);
+            aspectRatio = img.width / img.height;
+            $('outputWidth').value = img.width;
+            $('outputHeight').value = img.height;
+            history = []; currentIndex = -1;
+            saveState('元画像', '読み込み');
+            editor.classList.remove('hidden');
+        }
+
+        // 許容値表示
+        $('transparentTol').addEventListener('input', e => $('transparentTolVal').textContent = e.target.value);
+        $('recolorTol').addEventListener('input', e => $('recolorTolVal').textContent = e.target.value);
+        $('outputWidth').addEventListener('input', () => {
+            $('outputHeight').value = Math.round((parseInt($('outputWidth').value) || 1) / aspectRatio);
+        });
+
+        // トリミング
+        function getCoords(e, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: (e.clientX - rect.left) * canvas.width / rect.width, y: (e.clientY - rect.top) * canvas.height / rect.height };
+        }
+
+        originalCanvas.addEventListener('mousedown', e => { cropStart = getCoords(e, originalCanvas); isCropping = true; });
+        originalCanvas.addEventListener('mousemove', e => {
+            if (!isCropping) return;
+            cropEnd = getCoords(e, originalCanvas);
+            const state = history[currentIndex];
+            originalCtx.putImageData(state.data, 0, 0);
+            originalCtx.strokeStyle = '#667eea'; originalCtx.lineWidth = 2; originalCtx.setLineDash([8, 4]);
+            originalCtx.strokeRect(cropStart.x, cropStart.y, cropEnd.x - cropStart.x, cropEnd.y - cropStart.y);
+        });
+        originalCanvas.addEventListener('mouseup', () => {
+            originalCtx.setLineDash([]);
+            if (isCropping && cropEnd && Math.abs(cropEnd.x - cropStart.x) > 10 && Math.abs(cropEnd.y - cropStart.y) > 10) {
+                applyCrop();
+            }
+            isCropping = false;
+        });
+
+        function applyCrop() {
+            const x = Math.round(Math.min(cropStart.x, cropEnd.x)), y = Math.round(Math.min(cropStart.y, cropEnd.y));
+            const w = Math.round(Math.abs(cropEnd.x - cropStart.x)), h = Math.round(Math.abs(cropEnd.y - cropStart.y));
+            const imageData = originalCtx.getImageData(x, y, w, h);
+            resultCanvas.width = w; resultCanvas.height = h;
+            resultCtx.putImageData(imageData, 0, 0);
+            aspectRatio = w / h;
+            $('outputWidth').value = w; $('outputHeight').value = h;
+            saveState('トリミング', `(${x},${y})から${w}×${h}`);
+            cropStart = cropEnd = null;
+        }
+
+        // 色クリック取得
+        originalCanvas.addEventListener('click', e => {
+            if (isCropping) return;
+            const coords = getCoords(e, originalCanvas);
+            const pixel = originalCtx.getImageData(coords.x, coords.y, 1, 1).data;
+            const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(x => x.toString(16).padStart(2, '0')).join('');
+            $('transparentColor').value = hex;
+            $('fromColor').value = hex;
+        });
+
+        // ツール適用
+        function hexToRgb(hex) {
+            const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) };
+        }
+
+        $('applyTransparent').addEventListener('click', () => {
+            const color = $('transparentColor').value;
+            const tol = +$('transparentTol').value;
+            const imageData = resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            const d = imageData.data, c = hexToRgb(color);
+            let count = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                if (Math.sqrt((d[i]-c.r)**2 + (d[i+1]-c.g)**2 + (d[i+2]-c.b)**2) <= tol) {
+                    d[i+3] = 0;
+                    count++;
+                }
+            }
+            resultCtx.putImageData(imageData, 0, 0);
+            saveState('透過', `${color} 許容値${tol} → ${count}px透過`);
+        });
+
+        $('applyRecolor').addEventListener('click', () => {
+            const from = $('fromColor').value, to = $('toColor').value;
+            const tol = +$('recolorTol').value;
+            const imageData = resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            const d = imageData.data, fc = hexToRgb(from), tc = hexToRgb(to);
+            let count = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i+3] > 0 && Math.sqrt((d[i]-fc.r)**2 + (d[i+1]-fc.g)**2 + (d[i+2]-fc.b)**2) <= tol) {
+                    d[i] = tc.r; d[i+1] = tc.g; d[i+2] = tc.b;
+                    count++;
+                }
+            }
+            resultCtx.putImageData(imageData, 0, 0);
+            saveState('色置換', `${from}→${to} 許容値${tol} → ${count}px変更`);
+        });
+
+        $('applyFill').addEventListener('click', () => {
+            const color = $('fillColor').value;
+            const onlyTransparent = $('fillTransparentOnly').checked;
+            const imageData = resultCtx.getImageData(0, 0, resultCanvas.width, resultCanvas.height);
+            const d = imageData.data, c = hexToRgb(color);
+            let count = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                if (onlyTransparent) {
+                    if (d[i+3] === 0) { d[i] = c.r; d[i+1] = c.g; d[i+2] = c.b; d[i+3] = 255; count++; }
+                } else {
+                    if (d[i+3] > 0) { d[i] = c.r; d[i+1] = c.g; d[i+2] = c.b; count++; }
+                }
+            }
+            resultCtx.putImageData(imageData, 0, 0);
+            const mode = onlyTransparent ? '透明部分のみ' : '不透明部分';
+            saveState('塗りつぶし', `${color} ${mode} → ${count}px`);
+        });
+
+        $('resetBtn').addEventListener('click', () => { if (originalImage) initEditor(originalImage); });
+        $('downloadBtn').addEventListener('click', () => {
+            const w = +$('outputWidth').value, h = +$('outputHeight').value;
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            c.getContext('2d').drawImage(resultCanvas, 0, 0, w, h);
+            const a = document.createElement('a'); a.download = 'edited.png'; a.href = c.toDataURL('image/png'); a.click();
+        });
+    </script>
+</body>
+</html>
