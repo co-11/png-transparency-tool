@@ -597,6 +597,12 @@
       </div>
       <!-- Editor Controls (hidden initially) -->
       <div id="editorControls" class="hidden" style="display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
+      <div class="sidebar-section" style="padding:10px">
+        <div class="form-row" style="gap:4px">
+          <input type="text" id="fileName" placeholder="ファイル名" style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text-primary)">
+          <span style="color:var(--text-muted);font-size:13px;padding:8px 4px">.png</span>
+        </div>
+      </div>
       <button class="btn-success" id="downloadBtn" style="width:100%">
         <span class="icon icon-sm">download</span>PNGダウンロード
       </button>
@@ -914,6 +920,11 @@
     // ===== File Loading =====
     const loadFile = file => {
       if (!file?.type.startsWith('image/')) return;
+      // Extract filename without extension
+      if (file.name) {
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        $('fileName').value = baseName;
+      }
       const reader = new FileReader();
       reader.onload = e => {
         const img = new Image();
@@ -1722,7 +1733,8 @@
       cvs.width = w; cvs.height = h;
       cvs.getContext('2d').drawImage(DOM.workCvs, 0, 0, w, h);
       const a = document.createElement('a');
-      a.download = 'edited.png';
+      const fileName = $('fileName').value.trim() || 'edited';
+      a.download = fileName + '.png';
       a.href = cvs.toDataURL('image/png');
       a.click();
     };
