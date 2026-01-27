@@ -596,39 +596,40 @@
         </div>
       </div>
       <!-- Editor Controls (hidden initially) -->
-      <div id="editorControls" class="hidden" style="display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
-      <div class="sidebar-section" style="padding:10px">
-        <div class="form-row" style="gap:4px">
-          <input type="text" id="fileName" placeholder="ファイル名" style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text-primary)">
-          <span style="color:var(--text-muted);font-size:13px;padding:8px 4px">.png</span>
-        </div>
-      </div>
-      <button class="btn-success" id="downloadBtn" style="width:100%">
-        <span class="icon icon-sm">download</span>PNGダウンロード
-      </button>
-      
-      <button class="btn-gradient" id="copyBtn" style="width:100%">
-        <span class="icon icon-sm">content_copy</span>クリップボードにコピー
-      </button>
-
-      <div class="sidebar-section">
-        <div class="sidebar-title"><span class="icon icon-sm">straighten</span>出力サイズ</div>
-        <div class="form-row">
-          <input type="number" id="outW" min="1" max="4096">
-          <span style="color:var(--text-muted)">×</span>
-          <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
-        </div>
-      </div>
-
-      <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-        <div class="sidebar-title"><span class="icon icon-sm">history</span>編集履歴</div>
-        <div class="history-list" id="historyList"></div>
-      </div>
-
-      <button class="btn-secondary" id="resetBtn" style="width:100%">
-        <span class="icon icon-sm">refresh</span>リセット
-      </button>
-      </div>
+			<div id="editorControls" class="hidden" style="display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
+			  <button class="btn-success" id="downloadBtn" style="width:100%">
+			    <span class="icon icon-sm">download</span>PNGダウンロード
+			  </button>
+			  
+			  <button class="btn-gradient" id="copyBtn" style="width:100%">
+			    <span class="icon icon-sm">content_copy</span>クリップボードにコピー
+			  </button>
+			
+			  <div class="sidebar-section" style="padding:10px">
+			    <div class="form-row" style="gap:4px">
+			      <input type="text" id="fileName" placeholder="ファイル名" style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text-primary)">
+			      <span style="color:var(--text-muted);font-size:13px;padding:8px 4px">.png</span>
+			    </div>
+			  </div>
+			
+			  <div class="sidebar-section">
+			    <div class="sidebar-title"><span class="icon icon-sm">straighten</span>出力サイズ</div>
+			    <div class="form-row">
+			      <input type="number" id="outW" min="1" max="4096">
+			      <span style="color:var(--text-muted)">×</span>
+			      <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
+			    </div>
+			  </div>
+			
+			  <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+			    <div class="sidebar-title"><span class="icon icon-sm">history</span>編集履歴</div>
+			    <div class="history-list" id="historyList"></div>
+			  </div>
+			
+			  <button class="btn-secondary" id="resetBtn" style="width:100%">
+			    <span class="icon icon-sm">refresh</span>リセット
+			  </button>
+			</div>
     </div>
   </div>
 
