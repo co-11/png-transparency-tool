@@ -73,6 +73,8 @@
       border-radius: var(--radius-xl);
       padding: 28px;
       box-shadow: var(--shadow-xl);
+      position: relative;
+      min-height: calc(100vh - 48px);
     }
     
     .sidebar {
@@ -208,12 +210,37 @@
     .dropzone {
       border: 2px dashed var(--border);
       border-radius: var(--radius-lg);
-      padding: 48px 32px;
+      padding: 32px;
       text-align: center;
       cursor: pointer;
       background: var(--surface-alt);
       transition: all var(--transition);
       margin-bottom: 24px;
+    }
+    .dropzone.fullscreen {
+      position: absolute;
+      top: 100px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      width: auto;
+      height: auto;
+      transform: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-width: 4px;
+      background: var(--surface);
+      box-shadow: var(--shadow-xl);
+    }
+    .dropzone.fullscreen .icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+    .dropzone.fullscreen p {
+      font-size: 20px;
     }
     .dropzone:hover, .dropzone.dragover {
       border-color: var(--accent);
@@ -784,13 +811,13 @@
         <h1><span class="icon icon-lg">image</span>PNG透過エディター</h1>
         <div class="header-actions">
           <button class="btn-ghost" id="clearBtn" style="display:none"><span class="icon icon-sm">restart_alt</span> クリア</button>
-          <button class="btn-icon" id="helpBtn" title="使い方"><span class="icon">help</span></button>
+          <button class="btn-ghost" id="helpBtn" title="使い方"><span class="icon icon-sm">help</span> 使い方</button>
           <button class="btn-icon" id="themeBtn" title="テーマ切替"><span class="icon" id="themeIcon">dark_mode</span></button>
         </div>
       </header>
 
       <!-- Drop Zone -->
-      <div class="dropzone" id="dropzone">
+      <div class="dropzone fullscreen" id="dropzone">
         <span class="icon">add_photo_alternate</span>
         <p>画像をドラッグ＆ドロップ / クリック / Ctrl+V</p>
         <input type="file" id="fileInput" accept="image/*">
@@ -814,7 +841,7 @@
               </div>
               <div class="form-row">
                 <input type="checkbox" id="tAll">
-                <label for="tAll" style="min-width:auto;cursor:pointer">色を無視して選択範囲全体を透過</label>
+                <label for="tAll" style="min-width:auto;cursor:pointer">色を無視して<br>選択範囲全体を透過</label>
               </div>
             </div>
             <div class="card-footer">
@@ -878,7 +905,7 @@
           
           <div class="mode-toolbar">
             <button class="mode-btn active" id="modePick"><span class="icon icon-sm">colorize</span> ピッカー</button>
-            <button class="mode-btn" id="modeCrop"><span class="icon icon-sm">crop</span> トリミング</button>
+            <button class="mode-btn" id="modeCrop" style="margin-right:24px"><span class="icon icon-sm">crop</span> トリミング</button>
             <button class="mode-btn" id="modeSelect"><span class="icon icon-sm">select_all</span> 矩形選択</button>
             <button class="mode-btn" id="modeLasso"><span class="icon icon-sm">gesture</span> 投げ縄</button>
             <button class="mode-btn" id="modeMagic"><span class="icon icon-sm">auto_fix_high</span> 自動選択</button>
@@ -943,7 +970,39 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar hidden" id="sidebar">
+    <div class="sidebar" id="sidebar">
+      <!-- Feature Overview (shown initially) -->
+      <div id="sidebarIntro" class="sidebar-section" style="flex:1;overflow-y:auto">
+        <div class="sidebar-title"><span class="icon icon-sm">auto_awesome</span>機能紹介</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7">
+          <p style="margin-bottom:16px">画像の背景を簡単に透過してPNGとして保存できるWebアプリです。</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
+              <span class="icon" style="color:var(--accent)">blur_on</span>
+              <span><b style="color:var(--text-primary)">背景透過</b><br>ワンクリックで背景を透明に</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
+              <span class="icon" style="color:var(--accent)">palette</span>
+              <span><b style="color:var(--text-primary)">色置換</b><br>特定の色を別の色に変換</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
+              <span class="icon" style="color:var(--accent)">crop</span>
+              <span><b style="color:var(--text-primary)">トリミング</b><br>必要な部分だけ切り出し</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
+              <span class="icon" style="color:var(--accent)">grid_view</span>
+              <span><b style="color:var(--text-primary)">モザイク</b><br>選択範囲をぼかし加工</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
+              <span class="icon" style="color:var(--accent)">auto_fix_high</span>
+              <span><b style="color:var(--text-primary)">自動選択</b><br>同色領域を自動検出</span>
+            </div>
+          </div>
+          <p style="margin-top:16px;font-size:11px;color:var(--text-muted)">← 左のエリアに画像をドロップして開始</p>
+        </div>
+      </div>
+      <!-- Editor Controls (hidden initially) -->
+      <div id="editorControls" class="hidden" style="display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
       <button class="btn-success" id="downloadBtn" style="width:100%">
         <span class="icon icon-sm">download</span>PNGダウンロード
       </button>
@@ -957,7 +1016,7 @@
         <div class="form-row">
           <input type="number" id="outW" min="1" max="4096">
           <span style="color:var(--text-muted)">×</span>
-          <input type="text" id="outH" readonly class="output-height-readonly">
+          <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
         </div>
       </div>
 
@@ -969,8 +1028,11 @@
       <button class="btn-secondary" id="resetBtn" style="width:100%">
         <span class="icon icon-sm">refresh</span>リセット
       </button>
+      </div>
     </div>
   </div>
+
+  
 
   <!-- Help Panel -->
   <div class="help-panel" id="helpPanel">
@@ -991,10 +1053,10 @@
         <h3><span class="icon icon-sm">mouse</span>キャンバス操作モード</h3>
         <ul>
           <li><b>ピッカー</b>: クリックで色を取得（ルーペ表示付き）</li>
-          <li><b>トリミング</b>: ドラッグで範囲選択、確定ボタンで切り抜き（Shift: 正方形）</li>
-          <li><b>矩形選択</b>: ドラッグで編集範囲を限定</li>
-          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で選択範囲として機能</li>
-          <li><b>自動選択</b>: クリックで同色の連続領域を自動選択（許容値で調整）</li>
+          <li><b>トリミング</b>: ドラッグで範囲選択、確定ボタンで切り抜き<br><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:bold">⇧ Shift: 正方形に固定</span></li>
+          <li><b>矩形選択</b>: ドラッグで編集範囲を限定<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
+          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で選択範囲として機能<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
+          <li><b>自動選択</b>: クリックで同色の連続領域を自動選択（許容値で調整）<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
           <li><b>ハンド</b>: ドラッグで画像を移動</li>
         </ul>
       </div>
@@ -1004,6 +1066,7 @@
           <li><b>透過</b>: 指定色を透明に（許容値で範囲調整）</li>
           <li><b>色置換</b>: 色Aを色Bに置き換え</li>
           <li><b>塗りつぶし</b>: 透明/不透明部分を塗りつぶし</li>
+          <li><b>モザイク</b>: 選択範囲にモザイク処理</li>
           <li>選択範囲があれば、その範囲内のみに適用</li>
         </ul>
       </div>
@@ -1020,7 +1083,7 @@
         <ul>
           <li><b>Ctrl+Z</b>: 元に戻す（Undo）</li>
           <li><b>Ctrl+Shift+Z / Ctrl+Y</b>: やり直し（Redo）</li>
-          <li><b>Ctrl押下</b>: 選択範囲追加モード（複数選択可能）</li>
+          <li><b style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px">⌃ Ctrl押下</b>: 選択範囲追加モード（複数選択可能）</li>
           <li>履歴リストをクリックで任意の状態に復元</li>
         </ul>
       </div>
@@ -1042,7 +1105,6 @@
       </div>
     </div>
   </div>
-
   <script>
   (function() {
     'use strict';
@@ -1060,6 +1122,7 @@
       workContainer: $('workContainer'),
       overlay: $('overlay'),
       historyList: $('historyList'),
+      
       helpPanel: $('helpPanel'),
       origSection: $('origSection'),
       // Controls
@@ -1089,7 +1152,7 @@
       historyIdx: -1,
       ratio: 1,
       mode: 'pick',
-      dark: localStorage.getItem('dark') !== null ? localStorage.getItem('dark') === '1' : window.matchMedia('(prefers-color-scheme: dark)').matches,
+      dark: localStorage.getItem('dark') !== null ? localStorage.getItem('dark') === '1' : true,
       zoom: { orig: 100, work: 100 },
       pan: { orig: { x: 0, y: 0 }, work: { x: 0, y: 0 } },
       crop: { start: null, end: null, active: false },
@@ -1135,6 +1198,7 @@
     $('themeBtn').onclick = () => { state.dark = !state.dark; updateTheme(); };
 
     // ===== Help Panel =====
+    // Help Panel
     $('helpBtn').onclick = () => DOM.helpPanel.classList.toggle('show');
     $('closeHelp').onclick = () => DOM.helpPanel.classList.remove('show');
 
@@ -1282,8 +1346,11 @@
       state.pan.work = { x: 0, y: 0 };
       
       saveHistory('元画像', '読み込み');
+      DOM.dropzone.classList.remove('fullscreen');
       DOM.editor.classList.remove('hidden');
       DOM.sidebar.classList.remove('hidden');
+      $('editorControls').classList.remove('hidden');
+      $('sidebarIntro').classList.add('hidden');
       $('clearBtn').style.display = 'inline-flex';
       setTimeout(() => { fitOrigZoom(); fitWorkZoom(); }, 50);
     };
@@ -1304,9 +1371,12 @@
       state.currentSelection = null;
       state.lassoPoints = [];
       DOM.editor.classList.add('hidden');
-      DOM.sidebar.classList.add('hidden');
+      // DOM.sidebar.classList.add('hidden');
       DOM.origSection.classList.add('hidden');
       clearBtn.style.display = 'none';
+      DOM.dropzone.classList.add('fullscreen');
+      $('editorControls').classList.add('hidden');
+      $('sidebarIntro').classList.remove('hidden');
       DOM.fileInput.value = '';
     };
     clearBtn.onclick = clearAll;
@@ -1319,10 +1389,10 @@
     // ===== Mode Management =====
     const modeHints = {
       pick: '<span class="icon icon-sm">lightbulb</span>クリックで色を取得',
-      crop: '<span class="icon icon-sm">lightbulb</span>ドラッグでトリミング（Shift: 正方形）',
-      select: '<span class="icon icon-sm">lightbulb</span>ドラッグで矩形選択（Ctrl: 追加モード）',
-      lasso: '<span class="icon icon-sm">lightbulb</span>クリックで頂点追加（Ctrl: 追加モード）',
-      magic: '<span class="icon icon-sm">lightbulb</span>クリックで同色領域を自動選択（Ctrl: 追加）',
+      crop: '<span class="icon icon-sm">lightbulb</span>ドラッグでトリミング　<b style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px">⇧ Shift: 正方形</b>',
+      select: '<span class="icon icon-sm">lightbulb</span>ドラッグで矩形選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
+      lasso: '<span class="icon icon-sm">lightbulb</span>クリックで頂点追加　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
+      magic: '<span class="icon icon-sm">lightbulb</span>クリックで同色領域を自動選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加</b>',
       hand: '<span class="icon icon-sm">lightbulb</span>ドラッグで画像を移動'
     };
 
