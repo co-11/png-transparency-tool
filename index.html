@@ -3,1743 +3,396 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PNG透過エディター</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
-  <style>
-    /* ===== Reset & CSS Variables ===== */
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    :root {
-      /* Colors - Light Mode */
-      --bg-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-      --surface: #cbd5e1;
-      --surface-alt: #eef2f7;
-      --surface-hover: #f1f5f9;
-      --text-primary: #1e293b;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --border: #e2e8f0;
-      --accent: #6366f1;
-      --accent-light: #818cf8;
-      --accent-dark: #4f46e5;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      
-      /* Spacing & Radius */
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 16px;
-      --radius-xl: 20px;
-      
-      /* Shadows */
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-      --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
-      --shadow-xl: 0 25px 60px rgba(0,0,0,0.25);
-      
-      /* Animation */
-      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    /* Colors - Dark Mode */
-    .dark {
-      --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
-      --surface: #1e1e2e;
-      --surface-alt: #262637;
-      --surface-hover: #2e2e42;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --border: #334155;
-      --accent: #818cf8;
-      --accent-light: #a5b4fc;
-      --accent-dark: #6366f1;
-    }
-
-    /* ===== Base Styles ===== */
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-gradient);
-      min-height: 100vh;
-      padding: 24px;
-      color: var(--text-primary);
-    }
-
-    /* ===== Layout ===== */
-    .app { display: flex; gap: 24px; max-width: 1400px; margin: 0 auto; }
-    
-    .main {
-      flex: 1;
-      min-width: 0;
-      background: var(--surface);
-      border-radius: var(--radius-xl);
-      padding: 28px;
-      box-shadow: var(--shadow-xl);
-      position: relative;
-      min-height: calc(100vh - 48px);
-    }
-    
-    .sidebar {
-      width: 300px;
-      background: var(--surface);
-      border-radius: var(--radius-xl);
-      padding: 20px;
-      box-shadow: var(--shadow-lg);
-      max-height: calc(100vh - 48px);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    .hidden { display: none !important; }
-
-    /* ===== Header ===== */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    
-    .header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .header-actions { display: flex; gap: 8px; }
-
-    /* ===== Icons ===== */
-    .icon { font-family: 'Material Symbols Rounded'; font-size: 20px; vertical-align: middle; line-height: 1; }
-    .icon-sm { font-size: 18px; }
-    .icon-lg { font-size: 24px; }
-
-    /* ===== Buttons ===== */
-    button {
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .btn-icon { width: 40px; height: 40px; background: var(--surface-alt); color: var(--text-secondary); }
-    .btn-icon:hover { background: var(--accent); color: white; transform: scale(1.05); }
-    
-    .btn-primary {
-      padding: 10px 20px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: white;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
-    
-    .btn-success {
-      padding: 12px 24px;
-      background: linear-gradient(135deg, var(--success), #059669);
-      color: white;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-    }
-    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
-    
-    .btn-secondary { padding: 10px 20px; background: var(--surface-alt); color: var(--text-primary); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--surface-hover); }
-    
-    .btn-ghost { padding: 8px 16px; background: transparent; color: var(--text-secondary); }
-    .btn-ghost:hover { background: var(--surface-alt); color: var(--text-primary); }
-    
-    .btn-gradient {
-      padding: 12px 24px;
-      background: linear-gradient(135deg, var(--accent), #a855f7);
-      color: white;
-      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
-    }
-    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5); }
-
-    /* ===== Drop Zone ===== */
-    .dropzone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      text-align: center;
-      cursor: pointer;
-      background: var(--surface-alt);
-      transition: all var(--transition);
-      margin-bottom: 24px;
-    }
-    .dropzone.fullscreen {
-      position: absolute;
-      top: 100px; left: 20px; right: 20px; bottom: 20px;
-      width: auto; height: auto;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 100;
-      border-width: 4px;
-      background: var(--surface);
-      box-shadow: var(--shadow-xl);
-    }
-    .dropzone.fullscreen .icon { font-size: 80px; margin-bottom: 24px; }
-    .dropzone.fullscreen p { font-size: 20px; }
-    .dropzone:hover, .dropzone.dragover {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(168,85,247,0.05));
-    }
-    .dropzone .icon { font-size: 48px; color: var(--accent); margin-bottom: 16px; display: block; }
-    .dropzone p { color: var(--text-secondary); font-size: 15px; }
-    .dropzone input { display: none; }
-
-    /* ===== Tool Cards ===== */
-    .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    
-    .card {
-      background: var(--surface-alt);
-      border-radius: var(--radius-lg);
-      padding: 16px 16px 50px;
-      position: relative;
-      border: 1px solid var(--border);
-      transition: all var(--transition);
-    }
-    .card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
-    
-    .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--text-primary); font-weight: 600; font-size: 14px; }
-    .card-header .icon { color: var(--accent); }
-    .card-body { display: flex; flex-direction: column; gap: 10px; }
-    .card-footer { position: absolute; bottom: 12px; right: 12px; }
-
-    /* ===== Form Controls ===== */
-    .form-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .form-row label { font-size: 12px; color: var(--text-secondary); min-width: 45px; }
-    
-    input[type="color"] { width: 36px; height: 30px; border: 2px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; }
-    
-    input[type="range"] {
-      flex: 1; min-width: 60px; max-width: 100px; height: 6px;
-      border-radius: 3px; background: var(--border); -webkit-appearance: none; cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
-      background: var(--accent); box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
-    }
-    
-    input[type="number"] {
-      width: 70px; padding: 8px 10px; border: 2px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 13px; background: var(--surface); color: var(--text-primary); transition: border-color var(--transition);
-    }
-    input[type="number"]:focus { outline: none; border-color: var(--accent); }
-    
-    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
-    
-    .tol-input {
-      width: 50px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 12px; font-weight: 600; background: var(--surface); color: var(--accent); text-align: center;
-    }
-    .tol-input:focus { outline: none; border-color: var(--accent); }
-    
-    .output-height-readonly { border: none; background: transparent; color: var(--text-secondary); pointer-events: none; }
-
-    /* ===== Mode Toolbar (Browser Tab Style) ===== */
-    .mode-toolbar {
-      display: flex; gap: 0; align-items: stretch; justify-content: flex-start;
-      padding: 0 20px; flex-wrap: nowrap; margin-bottom: 0; position: relative; z-index: 1;
-    }
-    
-    .mode-btn {
-      padding: 0 16px; height: 38px; background: var(--surface-alt); color: var(--text-secondary);
-      border: 1px solid var(--border); border-bottom: none;
-      border-radius: var(--radius-md) var(--radius-md) 0 0;
-      font-size: 12px; margin-right: -1px; position: relative; top: 1px;
-    }
-    .mode-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
-    .mode-btn.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: white; border-color: var(--accent); border-bottom: 1px solid var(--surface);
-      z-index: 3; font-weight: 600; box-shadow: 0 -2px 10px rgba(99, 102, 241, 0.3);
-    }
-
-    /* ===== Canvas Area ===== */
-    .canvas-section { margin-bottom: 20px; }
-    .canvas-title { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: var(--text-secondary); }
-    
-    .canvas-hint {
-      position: relative; margin-top: 12px; font-size: 12px; color: var(--text-secondary);
-      background: var(--surface-alt); padding: 10px 16px; border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border);
-    }
-    
-    .canvas-container {
-      position: relative; overflow: hidden; border: 2px solid var(--border);
-      border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
-      background: repeating-conic-gradient(var(--surface-alt) 0% 25%, var(--surface) 0% 50%) 50% / 16px 16px;
-      height: 480px; display: flex; align-items: center; justify-content: center; z-index: 2;
-    }
-    .canvas-container canvas { display: block; transform-origin: center center; }
-    .canvas-container.hand { cursor: grab; }
-    .canvas-container.hand:active { cursor: grabbing; }
-    .canvas-container svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-
-    /* ===== Canvas Overlay Buttons ===== */
-    .canvas-btn {
-      position: absolute; right: 12px; padding: 8px 14px; font-size: 12px;
-      border-radius: var(--radius-md); z-index: 10; display: none; backdrop-filter: blur(8px);
-    }
-    .canvas-btn.crop-confirm { bottom: 56px; background: rgba(239, 68, 68, 0.9); color: white; }
-    .canvas-btn.lasso-confirm { bottom: 100px; background: rgba(16, 185, 129, 0.9); color: white; }
-    .canvas-btn.lasso-clear { bottom: 12px; background: rgba(245, 158, 11, 0.9); color: white; }
-    .canvas-btn:hover { transform: scale(1.05); }
-
-    /* ===== Color Picker Loupe ===== */
-    .picker-loupe {
-      position: fixed; width: 120px; height: 120px; border-radius: 50%;
-      border: 3px solid var(--accent); box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.1);
-      pointer-events: none; z-index: 100; overflow: hidden; display: none; background: var(--surface);
-    }
-    .picker-loupe canvas { width: 100%; height: 100%; image-rendering: pixelated; }
-    .picker-loupe::after {
-      content: ''; position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
-      margin: -6px 0 0 -6px; border: 2px solid rgba(0,0,0,0.8); border-radius: 2px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.8);
-    }
-    .picker-info {
-      position: absolute; bottom: -32px; left: 50%; transform: translateX(-50%);
-      background: var(--surface); padding: 4px 10px; border-radius: var(--radius-sm);
-      font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: var(--shadow-md);
-      white-space: nowrap; display: flex; align-items: center; gap: 6px;
-    }
-    .picker-info .swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); }
-
-    /* ===== Zoom Controls ===== */
-    .zoom-controls {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      margin-top: 12px; padding: 10px; background: var(--surface-alt); border-radius: var(--radius-md);
-    }
-    .zoom-controls input[type="range"] { width: 80px; }
-    .zoom-controls span { font-size: 12px; color: var(--text-secondary); }
-    .zoom-controls button { padding: 4px 10px; font-size: 11px; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); }
-    
-    .border-toggle { padding: 6px 12px; background: var(--surface-alt); color: var(--text-muted); border: 2px solid var(--border); }
-    .border-toggle.active { background: linear-gradient(135deg, var(--success), #059669); color: white; border-color: transparent; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
-    .border-toggle:hover { transform: scale(1.02); }
-    
-    .zoom-hint { font-size: 10px; color: var(--text-muted); }
-
-    /* ===== Toggle Original ===== */
-    .toggle-section { margin-bottom: 16px; }
-    .toggle-btn { padding: 8px 16px; background: var(--surface-alt); color: var(--text-secondary); border: 2px solid transparent; }
-    .toggle-btn.active { background: var(--accent); color: white; }
-
-    /* ===== Sidebar ===== */
-    .sidebar-section { background: var(--surface-alt); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border); }
-    .sidebar-title {
-      display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
-      color: var(--text-secondary); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
-    }
-
-    /* ===== History ===== */
-    .history-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 200px; }
-    
-    .history-item {
-      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-      background: var(--surface); border-radius: var(--radius-md); cursor: pointer;
-      transition: all var(--transition); border: 1px solid transparent;
-    }
-    .history-item:hover { background: var(--surface-hover); border-color: var(--border); }
-    .history-item.active { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: white; border-color: transparent; }
-    .history-item.active .history-detail, .history-item.active .history-del { color: rgba(255,255,255,0.8); }
-    
-    .history-num { font-weight: 700; font-size: 12px; min-width: 20px; }
-    .history-info { flex: 1; min-width: 0; }
-    .history-label { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-detail { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    .history-del { background: transparent; color: var(--text-muted); padding: 4px 8px; font-size: 12px; }
-    .history-del:hover { background: var(--danger); color: white; }
-    .history-del:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    /* ===== Help Panel ===== */
-    .help-panel {
-      position: fixed; top: 0; right: 0; width: 380px; height: 100vh;
-      background: var(--surface); box-shadow: -8px 0 30px rgba(0,0,0,0.2);
-      z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto;
-    }
-    .help-panel.show { transform: translateX(0); }
-    
-    .help-header {
-      display: flex; justify-content: space-between; align-items: center; padding: 20px 24px;
-      border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1;
-    }
-    .help-header h2 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
-    .help-content { padding: 24px; }
-    .help-section { margin-bottom: 24px; }
-    .help-section h3 { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .help-section ul { list-style: none; }
-    .help-section li { font-size: 12px; color: var(--text-secondary); padding: 6px 0 6px 18px; position: relative; line-height: 1.6; }
-    .help-section li::before { content: '•'; position: absolute; left: 4px; color: var(--accent); }
-    .help-section li b { color: var(--text-primary); }
-
-    /* ===== Cursors ===== */
-    #workCvs.pick, #workCvs.crop, #workCvs.select, #workCvs.lasso, #workCvs.magic { cursor: crosshair; }
-
-    /* ===== Responsive ===== */
-    @media (max-width: 960px) {
-      .app { flex-direction: column; }
-      .sidebar { width: 100%; max-height: 280px; }
-    }
-  </style>
+  <title>写真整理ツール</title>
+  
+  <!-- 外部ライブラリ (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- CSSファイルの読み込み -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <!-- Main Panel -->
-    <div class="main">
-      <header class="header">
-        <h1><span class="icon icon-lg">image</span>PNG透過エディター<span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:12px">ver.1 (2026.01.27)</span></h1>
-        <div class="header-actions">
-          <button class="btn-ghost" id="clearBtn" style="display:none"><span class="icon icon-sm">restart_alt</span> クリア</button>
-          <button class="btn-ghost" id="helpBtn" title="使い方"><span class="icon icon-sm">help</span> 使い方</button>
-          <button class="btn-icon" id="themeBtn" title="テーマ切替"><span class="icon" id="themeIcon">dark_mode</span></button>
-        </div>
-      </header>
 
-      <!-- Drop Zone -->
-      <div class="dropzone fullscreen" id="dropzone">
-        <span class="icon">add_photo_alternate</span>
-        <p>画像をドラッグ＆ドロップ / クリック / Ctrl+V</p>
-        <input type="file" id="fileInput" accept="image/*">
+<!-- ドラッグ用オーバーレイ -->
+<div class="drop-overlay"></div>
+
+<header>
+  <h1><i data-lucide="file-check"></i> 画像PDF結合ツール</h1>
+  <div class="header-controls">
+    <button id="themeToggleBtn" class="btn-icon" title="テーマ切り替え">
+      <i data-lucide="sun" id="themeIcon"></i>
+    </button>
+  </div>
+</header>
+
+<div class="app-layout">
+  <!-- 左側：メインコンテンツ -->
+  <main class="main-content">
+    <div class="toolbar">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('folderInput').click()">
+        <i data-lucide="folder-open" size="16"></i> フォルダを開く
+      </button>
+      <input type="file" id="folderInput" webkitdirectory multiple accept="image/*" style="display:none">
+      
+      <button class="btn btn-secondary btn-sm" onclick="clearAll()">
+        <i data-lucide="trash-2" size="16"></i> 全削除
+      </button>
+      
+      <div style="flex:1"></div>
+      <span style="font-size:13px; color:var(--text-sub);" id="countDisplay">0 枚の画像</span>
+    </div>
+
+    <!-- 画像処理ツールバー -->
+    <div class="processing-toolbar">
+      <div class="proc-group">
+        <div class="proc-title"><i data-lucide="scissors" size="14"></i> トリミング・加工</div>
+        <div class="proc-buttons">
+          <button id="pickColorBtn" class="btn btn-purple btn-sm" disabled title="画像から色を取得">
+            <i data-lucide="pipette" size="14"></i> スポイト
+          </button>
+          <button id="redBoxBtn" class="btn btn-red-outline btn-sm" disabled title="赤枠またはマスクを一括設定">
+            <i data-lucide="square" size="14"></i> 枠/マスク
+          </button>
+          <button id="autoCropBtn" class="btn btn-outline-success btn-sm" disabled title="現在のスライダー設定で再処理">
+            <i data-lucide="refresh-cw" size="14"></i> 適用
+          </button>
+          <button id="resetProcBtn" class="btn btn-secondary btn-sm" disabled onclick="resetAllProcessing()" title="すべての処理をリセット">
+            <i data-lucide="rotate-ccw" size="14"></i> リセット
+          </button>
+        </div>
+      </div>
+      
+      <!-- スライダー表示切替ボタン -->
+      <button id="toggleSlidersBtn" class="btn btn-secondary btn-sm" title="トリミング感度設定を表示">
+        <i data-lucide="sliders-horizontal" size="14"></i> 感度調整
+      </button>
+    </div>
+
+    <!-- スライダーパネル（初期状態はhidden） -->
+    <div id="sliderPanel" class="slider-panel hidden">
+      <div class="proc-sliders">
+        <!-- Hue -->
+        <div class="dual-slider-container">
+          <div class="slider-value"><span>色相(H)</span> <span id="val-h">35 - 90</span></div>
+          <div class="dual-slider" id="slider-h">
+            <div class="slider-track"></div><div class="slider-range"></div>
+            <div class="thumb thumb-min"></div><div class="thumb thumb-max"></div>
+            <input type="range" class="range-input input-min" min="0" max="180" value="35">
+            <input type="range" class="range-input input-max" min="0" max="180" value="90">
+          </div>
+        </div>
+        <!-- Sat -->
+        <div class="dual-slider-container">
+          <div class="slider-value"><span>彩度(S)</span> <span id="val-s">40 - 255</span></div>
+          <div class="dual-slider" id="slider-s">
+            <div class="slider-track"></div><div class="slider-range"></div>
+            <div class="thumb thumb-min"></div><div class="thumb thumb-max"></div>
+            <input type="range" class="range-input input-min" min="0" max="255" value="40">
+            <input type="range" class="range-input input-max" min="0" max="255" value="255">
+          </div>
+        </div>
+        <!-- Val -->
+        <div class="dual-slider-container">
+          <div class="slider-value"><span>明度(V)</span> <span id="val-v">40 - 255</span></div>
+          <div class="dual-slider" id="slider-v">
+            <div class="slider-track"></div><div class="slider-range"></div>
+            <div class="thumb thumb-min"></div><div class="thumb thumb-max"></div>
+            <input type="range" class="range-input input-min" min="0" max="255" value="40">
+            <input type="range" class="range-input input-max" min="0" max="255" value="255">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-area">
+      <div id="previewGrid" class="preview-grid is-empty">
+        <div class="empty-state">
+          <div class="drop-message" onclick="document.getElementById('folderInput').click()">
+            <i data-lucide="image-plus" size="64" style="margin-bottom:16px; color:var(--text-sub);"></i>
+            <p style="font-size: 16px; font-weight: 500; color: var(--text-sub);">
+              フォルダごとここにドロップ<br>
+              <span style="font-size: 13px; font-weight: 400; color: var(--text-sub);">またはクリックして選択</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 右側：サイドバー -->
+  <aside class="sidebar">
+    
+    <!-- PDF作成アクション -->
+    <div class="sidebar-section">
+      <div class="sidebar-title"><i data-lucide="file-output"></i> 出力アクション</div>
+      
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label style="margin-bottom:8px;">出力モード</label>
+        <div class="radio-list">
+          <label class="radio-item">
+            <input type="radio" name="outputMode" value="pdf-image" checked>
+            <span>PDF (中身を画像化) <small style="color:var(--text-sub); margin-left:4px;">推奨</small></span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="outputMode" value="pdf-text">
+            <span>PDF (テキスト保持)</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="outputMode" value="image-file">
+            <span>画像ファイル (JPG/ZIP)</span>
+          </label>
+        </div>
       </div>
 
-      <!-- Editor -->
-      <div class="hidden" id="editor">
-        <!-- Tools -->
-        <div class="tools">
-          <div class="card">
-            <div class="card-header"><span class="icon icon-sm">blur_on</span>透過</div>
-            <div class="card-body">
-              <div class="form-row">
-                <label>色</label>
-                <input type="color" id="tColor" value="#ffffff">
-              </div>
-              <div class="form-row">
-                <label>許容値</label>
-                <input type="range" id="tTol" min="0" max="255" value="30">
-                <input type="number" class="tol-input" id="tTolVal" value="30" min="0" max="255">
-              </div>
-              <div class="form-row">
-                <input type="checkbox" id="tAll">
-                <label for="tAll" style="min-width:auto;cursor:pointer">色を無視して<br>選択範囲全体を透過</label>
-              </div>
-            </div>
-            <div class="card-footer">
-              <button class="btn-primary" id="applyT">適用</button>
-            </div>
-          </div>
+      <button id="generateBtn" class="btn btn-primary" disabled>
+        <i data-lucide="download"></i> 保存を実行
+      </button>
+      <button id="openFlowBtn" class="btn btn-secondary" onclick="openCsvFlowModal()">
+        <i data-lucide="folder-tree"></i> 写真振分フローを表示
+      </button>
+    </div>
 
-          <div class="card">
-            <div class="card-header"><span class="icon icon-sm">palette</span>色置換</div>
-            <div class="card-body">
-              <div class="form-row">
-                <input type="color" id="rFrom" value="#000000">
-                <span class="icon icon-sm" style="color:var(--text-muted)">arrow_forward</span>
-                <input type="color" id="rTo" value="#ff0000">
-              </div>
-              <div class="form-row">
-                <label>許容値</label>
-                <input type="range" id="rTol" min="0" max="255" value="30">
-                <input type="number" class="tol-input" id="rTolVal" value="30" min="0" max="255">
-              </div>
-            </div>
-            <div class="card-footer">
-              <button class="btn-primary" id="applyR">適用</button>
-            </div>
-          </div>
+    <!-- PDFレイアウト設定 -->
+    <div class="sidebar-section">
+      <div class="sidebar-title"><i data-lucide="settings-2"></i> レイアウト設定</div>
+      <div class="form-group">
+        <label>用紙サイズ</label>
+        <select id="pageSize" class="form-control">
+          <option value="a4">A4</option>
+          <option value="a3" selected>A3</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>向き</label>
+        <select id="orientation" class="form-control">
+          <option value="portrait">縦</option>
+          <option value="landscape" selected>横</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>1ページあたりの枚数</label>
+        <select id="imagesPerPage" class="form-control">
+          <option value="1">1枚</option>
+          <option value="2">2枚</option>
+          <option value="4" selected>4枚</option>
+          <option value="6">6枚</option>
+          <option value="9">9枚</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>余白 (mm)</label>
+        <input type="number" id="margin" value="10" min="0" max="50" class="form-control">
+      </div>
+    </div>
 
-          <div class="card">
-            <div class="card-header"><span class="icon icon-sm">format_color_fill</span>塗りつぶし</div>
-            <div class="card-body">
-              <div class="form-row">
-                <label>色</label>
-                <input type="color" id="fColor" value="#ff0000">
-              </div>
-              <div class="form-row">
-                <input type="checkbox" id="fOnly">
-                <label for="fOnly" style="min-width:auto;cursor:pointer">透明部分のみ</label>
-              </div>
-            </div>
-            <div class="card-footer">
-              <button class="btn-primary" id="applyF">適用</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="icon icon-sm">grid_view</span>モザイク</div>
-            <div class="card-body">
-              <div class="form-row">
-                <label>サイズ</label>
-                <input type="range" id="mosSize" min="2" max="50" value="10">
-                <input type="number" class="tol-input" id="mosSizeVal" value="10" min="2" max="50">
-              </div>
-              <div class="form-row" style="gap:4px">
-                <button class="btn-secondary mosaic-preset active" data-size="10" style="padding:4px 10px;font-size:11px">小</button>
-                <button class="btn-secondary mosaic-preset" data-size="20" style="padding:4px 10px;font-size:11px">中</button>
-                <button class="btn-secondary mosaic-preset" data-size="35" style="padding:4px 10px;font-size:11px">大</button>
-              </div>
-            </div>
-            <div class="card-footer">
-              <button class="btn-primary" id="applyMos">適用</button>
-            </div>
-          </div>
+    <!-- PDFプレビュー -->
+    <div class="sidebar-section" style="border-bottom:none;">
+      <div class="sidebar-title"><i data-lucide="eye"></i> レイアウト確認</div>
+      <div class="pdf-preview-box">
+        <div id="pdfPage" class="pdf-page-preview portrait"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ステータスバー -->
+<div id="statusBar" class="status-bar">
+  <div class="spinner"></div><span id="statusText">処理中...</span>
+</div>
+
+<!-- 画像プレビュー＆操作モーダル -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal-content" style="max-width: 800px; max-height: 90vh;">
+    <div style="padding:12px 16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:16px; margin:0;" id="previewModalTitle">画像プレビュー</h3>
+      <button onclick="closeModal('previewModal')" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-main);">&times;</button>
+    </div>
+    <div class="modal-body" style="background: #0f172a; display: flex; align-items: center; justify-content: center;">
+      <img id="previewModalImage" src="" alt="プレビュー" style="max-width: 100%; max-height: 60vh; object-fit: contain;">
+    </div>
+    <div style="padding:16px; border-top:1px solid var(--border-color); display:flex; justify-content: space-between; align-items: center; background: var(--bg-modal-footer);">
+      <div>
+        <button class="btn btn-danger" style="width: auto; padding: 8px 16px; font-size: 13px;" onclick="removeImageFromPreview()">
+          <i data-lucide="trash-2" size="16"></i> 削除
+        </button>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="previewUndoBtn" class="btn btn-secondary" style="width: auto; padding: 8px 16px; font-size: 13px;" onclick="undoEditFromPreview()">
+          <i data-lucide="rotate-ccw" size="16"></i> 元に戻す
+        </button>
+        <button class="btn btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;" onclick="openManualCropFromPreview()">
+          <i data-lucide="scissors" size="16"></i> 手動トリミング
+        </button>
+        <button class="btn btn-secondary" style="width: auto; padding: 8px 16px; font-size: 13px;" onclick="closeModal('previewModal')">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- トリミング編集モーダル -->
+<div class="modal-overlay" id="cropModal">
+  <div class="modal-content">
+    <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between;">
+      <h3 style="font-size:16px; margin:0;">手動トリミング</h3>
+      <button onclick="closeModal('cropModal')" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-main);">&times;</button>
+    </div>
+    <div class="modal-body">
+      <img id="cropTarget" src="" alt="" class="cropper-target">
+    </div>
+    <div style="padding:16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:12px; background:var(--bg-modal-footer);">
+      <button class="btn btn-secondary" style="width:auto;" onclick="closeModal('cropModal')">キャンセル</button>
+      <button class="btn btn-primary" style="width:auto;" onclick="applyManualCrop()">適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- スポイト用モーダル -->
+<div class="modal-overlay" id="pickModal">
+  <div class="modal-content">
+    <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between;">
+      <h3 style="font-size:16px; margin:0;">🎨 黒板の色を選択</h3>
+    </div>
+    <div class="modal-body">
+      <div class="modal-instruction">黒板の部分をクリックしてください</div>
+      <div class="img-container pick-cursor" style="height:100%; width:100%; display:flex; align-items:center; justify-content:center;">
+        <img id="pickImage" src="" alt="色選択">
+      </div>
+    </div>
+    <div style="padding:16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:12px; background:var(--bg-modal-footer);">
+      <button class="btn btn-secondary" onclick="closePickModalAndRun(false)">スキップ（デフォルト設定で実行）</button>
+    </div>
+  </div>
+</div>
+
+<!-- 赤枠編集用モーダル（機能拡張版） -->
+<div class="modal-overlay" id="redBoxModal">
+  <div class="modal-content" style="max-width:1000px; height:90vh;">
+    <div style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:16px; margin:0;">🔴 枠の一括追加設定（1枚目で指定）</h3>
+      <button class="btn btn-secondary" style="width:auto; padding:4px 8px; font-size:12px;" onclick="clearRedBoxes()">
+        <i data-lucide="trash"></i> 枠を全消去
+      </button>
+    </div>
+    
+    <!-- 手動編集ツールバー -->
+    <div class="manual-controls">
+      <div style="margin-right:16px; display:flex; gap:12px; align-items:center;">
+        <label class="toggle-switch" title="枠外を色で塗りつぶします">
+          <input type="checkbox" id="maskModeCheck" checked> <!-- Default Checked -->
+          <span>枠外を塗りつぶす (マスク)</span>
+        </label>
+        <div style="display:flex; align-items:center; gap:4px;">
+           <span>色:</span>
+           <input type="color" id="maskColorInput" value="#ffffff" style="border:none; width:24px; height:24px; cursor:pointer;">
         </div>
+      </div>
+      <div style="width:1px; height:20px; background:var(--border-color); margin:0 8px;"></div>
+      <div class="manual-input-group">
+        <span>X:</span><input type="number" id="rbX" class="manual-input" min="0">
+        <span>Y:</span><input type="number" id="rbY" class="manual-input" min="0">
+        <span>W:</span><input type="number" id="rbW" class="manual-input" min="0">
+        <span>H:</span><input type="number" id="rbH" class="manual-input" min="0">
+        <button onclick="updateRedBoxFromInputs()" class="btn btn-secondary" style="width:auto; padding:4px 8px; margin:0 0 0 4px; font-size:12px;">更新</button>
+      </div>
+    </div>
 
-        <!-- Canvas Section -->
-        <div class="canvas-section">
-          <div class="canvas-title"><span class="icon icon-sm">edit</span>編集キャンバス</div>
-          
-          <div class="mode-toolbar">
-            <button class="mode-btn active" id="modePick"><span class="icon icon-sm">colorize</span> ピッカー</button>
-            <button class="mode-btn" id="modeCrop" style="margin-right:24px"><span class="icon icon-sm">crop</span> トリミング</button>
-            <button class="mode-btn" id="modeSelect"><span class="icon icon-sm">select_all</span> 矩形選択</button>
-            <button class="mode-btn" id="modeLasso"><span class="icon icon-sm">gesture</span> 投げ縄</button>
-            <button class="mode-btn" id="modeMagic"><span class="icon icon-sm">auto_fix_high</span> 自動選択</button>
-            <div class="magic-tolerance" id="magicTolWrap" style="display:none;align-items:center;gap:6px;padding:0 10px;height:38px;background:var(--surface-alt);border-radius:var(--radius-sm);">
-              <label style="font-size:11px;color:var(--text-secondary)">許容値</label>
-              <input type="range" id="mTol" min="0" max="255" value="30" style="width:100px">
-              <input type="number" class="tol-input" id="mTolVal" value="30" min="0" max="255" style="width:60px">
-            </div>
+    <div class="modal-body" id="redBoxBody" style="background:#333; overflow:hidden;">
+      <div class="modal-instruction">ドラッグして枠を追加 (Ctrl+Zで戻る)</div>
+      <!-- 画像とCanvasを重ねるコンテナ -->
+      <div style="position:relative; display:inline-block;" id="redBoxContainer">
+        <img id="redBoxTargetImage" style="display:block; max-width:100%; max-height:80vh; pointer-events:none;">
+        <canvas id="redBoxCanvas" style="position:absolute; top:0; left:0;"></canvas>
+      </div>
+    </div>
+    <div style="padding:16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:12px; background:var(--bg-modal-footer);">
+      <button class="btn btn-secondary" style="width:auto;" onclick="closeModal('redBoxModal')">キャンセル</button>
+      <button class="btn btn-primary" style="width:auto;" onclick="applyRedBoxesToAll()">全画像に適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV振分フローモーダル -->
+<div class="modal-overlay" id="csvFlowModal">
+  <div class="modal-content" style="max-width:640px; max-height:90vh;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:16px; margin:0; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="folder-tree" size="20"></i> 写真振分フロー
+      </h3>
+      <button onclick="closeModal('csvFlowModal')" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-main);">&times;</button>
+    </div>
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      <!-- Step 1 -->
+      <div class="flow-step">
+        <div class="flow-step-num">1</div>
+        <div class="flow-step-body">
+          <div class="flow-step-title">ダウンロードしたPDFをCopilotに添付し、以下のプロンプトを入れる</div>
+          <div style="font-size:12px; color:#ef4444; margin-top:6px; font-weight:500;">※GPT-5,2 Think Deeperを選択すること</div>
+          <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+            <button id="copyPromptBtn" class="btn btn-primary btn-sm" style="flex:none;">
+              <i data-lucide="copy" size="14"></i> プロンプトをコピー
+            </button>
+            <button id="editPromptBtn" class="btn btn-secondary btn-sm" style="flex:none;">
+              <i data-lucide="pencil" size="14"></i> 編集
+            </button>
             <div style="flex:1"></div>
-            <button class="mode-btn" id="modeHand"><span class="icon icon-sm">pan_tool</span> ハンド</button>
+            <a href="https://m365.cloud.microsoft/chat/?auth=2" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="flex:none; text-decoration:none;">
+              <i data-lucide="external-link" size="14"></i> Copilotを開く
+            </a>
           </div>
-                    
-          <div class="canvas-container" id="workContainer">
-            <canvas id="workCvs"></canvas>
-            <svg id="overlay"></svg>
-            <button class="canvas-btn crop-confirm" id="cropConfirm"><span class="icon icon-sm">check</span> 確定</button>
-            <button class="canvas-btn lasso-confirm" id="lassoConfirm"><span class="icon icon-sm">check</span> 確定</button>
-            <button class="canvas-btn" id="invertSelection" style="bottom:56px;background:rgba(99,102,241,0.9);color:white;display:none"><span class="icon icon-sm">flip</span> 反転</button>
-            <button class="canvas-btn lasso-clear" id="lassoClear"><span class="icon icon-sm">close</span> クリア</button>
-          </div>
-          <div class="canvas-hint" id="modeHint"><span class="icon icon-sm">lightbulb</span>クリックで色を取得</div>
-          <!-- Color Picker Loupe -->
-          <div class="picker-loupe" id="pickerLoupe">
-            <canvas id="loupeCvs" width="60" height="60"></canvas>
-            <div class="picker-info">
-              <div class="swatch" id="loupeSwatch"></div>
-              <span id="loupeHex">#000000</span>
+          <div id="promptEditArea" class="hidden" style="margin-top:8px;">
+            <textarea id="promptTextarea" class="form-control" rows="10" style="font-size:11px; resize:vertical; font-family:monospace;"></textarea>
+            <div style="display:flex; gap:8px; margin-top:6px;">
+              <button id="savePromptBtn" class="btn btn-primary btn-sm" style="flex:none;">
+                <i data-lucide="check" size="14"></i> 保存
+              </button>
+              <button id="resetPromptBtn" class="btn btn-secondary btn-sm" style="flex:none;">
+                <i data-lucide="rotate-ccw" size="14"></i> デフォルトに戻す
+              </button>
             </div>
           </div>
-          
-          <div class="zoom-controls">
-            <button id="toggleBorder" class="border-toggle active"><span class="icon icon-sm">border_style</span> 境界線</button>
-            <span class="icon icon-sm">zoom_out</span>
-            <input type="range" id="workZoom" min="10" max="400" value="100">
-            <span class="icon icon-sm">zoom_in</span>
-            <span id="workZoomVal">100%</span>
-            <button id="workFit">フィット</button>
-            <span class="zoom-hint">スクロールでズーム</span>
-          </div>
         </div>
-
-        <!-- Original Image Toggle -->
-        <div class="toggle-section">
-          <button class="toggle-btn" id="toggleOrig"><span class="icon icon-sm">photo_library</span> 元画像を表示</button>
+      </div>
+      <!-- Step 2 -->
+      <div class="flow-step">
+        <div class="flow-step-num">2</div>
+        <div class="flow-step-body">
+          <div class="flow-step-title">出力されたCSVテキストをコピーし、以下の入力欄にペーストする</div>
+          <textarea id="csvInput" class="form-control" rows="5" placeholder="filename,工種（棟名）,施工階,施工部位,符号,位置&#10;example.jpg,選別処理棟,1階,スラブ,S3,23-24.D-E" style="font-size:11px; resize:vertical; margin-top:8px;"></textarea>
         </div>
-        
-        <div class="canvas-section hidden" id="origSection">
-          <div class="canvas-title"><span class="icon icon-sm">photo_library</span>元画像（参照用）</div>
-          <div class="canvas-container hand" id="origContainer">
-            <canvas id="origCvs"></canvas>
-          </div>
-          <div class="zoom-controls">
-            <span class="icon icon-sm">zoom_out</span>
-            <input type="range" id="origZoom" min="10" max="400" value="100">
-            <span class="icon icon-sm">zoom_in</span>
-            <span id="origZoomVal">100%</span>
-            <button id="origFit">フィット</button>
-            <span class="zoom-hint">スクロールでズーム</span>
-          </div>
+      </div>
+      <!-- Step 3 -->
+      <div class="flow-step" style="border-bottom:none; padding-bottom:0;">
+        <div class="flow-step-num">3</div>
+        <div class="flow-step-body">
+          <div class="flow-step-title">フォルダ振分ZIPをダウンロード</div>
+          <button id="csvZipBtn" class="btn btn-success" disabled style="margin-top:8px;">
+            <i data-lucide="folder-archive"></i> フォルダ振分ZIP保存
+          </button>
+          <div id="csvStatus" style="font-size:11px; color:var(--text-sub); margin-top:4px;"></div>
         </div>
       </div>
     </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <!-- Feature Overview (shown initially) -->
-      <div id="sidebarIntro" class="sidebar-section" style="flex:1;overflow-y:auto">
-        <div class="sidebar-title"><span class="icon icon-sm">auto_awesome</span>機能紹介</div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7">
-          <p style="margin-bottom:16px">画像の背景を簡単に透過してPNGとして保存できるWebアプリです。</p>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
-              <span class="icon" style="color:var(--accent)">blur_on</span>
-              <span><b style="color:var(--text-primary)">背景透過</b><br>ワンクリックで背景を透明に</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
-              <span class="icon" style="color:var(--accent)">palette</span>
-              <span><b style="color:var(--text-primary)">色置換</b><br>特定の色を別の色に変換</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
-              <span class="icon" style="color:var(--accent)">crop</span>
-              <span><b style="color:var(--text-primary)">トリミング</b><br>必要な部分だけ切り出し</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
-              <span class="icon" style="color:var(--accent)">grid_view</span>
-              <span><b style="color:var(--text-primary)">モザイク</b><br>選択範囲をぼかし加工</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:var(--radius-sm)">
-              <span class="icon" style="color:var(--accent)">auto_fix_high</span>
-              <span><b style="color:var(--text-primary)">自動選択</b><br>同色領域を自動検出</span>
-            </div>
-          </div>
-          <p style="margin-top:16px;font-size:11px;color:var(--text-muted)">← 左のエリアに画像をドロップして開始</p>
-        </div>
-      </div>
-      <!-- Editor Controls (hidden initially) -->
-			<div id="editorControls" class="hidden" style="display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
-			  <button class="btn-success" id="downloadBtn" style="width:100%">
-			    <span class="icon icon-sm">download</span>PNGダウンロード
-			  </button>
-			  
-			  <button class="btn-gradient" id="copyBtn" style="width:100%">
-			    <span class="icon icon-sm">content_copy</span>クリップボードにコピー
-			  </button>
-			
-			  <div class="sidebar-section" style="padding:10px">
-			    <div class="form-row" style="gap:4px">
-			      <input type="text" id="fileName" placeholder="ファイル名" style="flex:1;padding:8px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text-primary)">
-			      <span style="color:var(--text-muted);font-size:13px;padding:8px 4px">.png</span>
-			    </div>
-			  </div>
-			
-			  <div class="sidebar-section">
-			    <div class="sidebar-title"><span class="icon icon-sm">straighten</span>出力サイズ</div>
-			    <div class="form-row">
-			      <input type="number" id="outW" min="1" max="4096">
-			      <span style="color:var(--text-muted)">×</span>
-			      <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
-			    </div>
-			  </div>
-			
-			  <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-			    <div class="sidebar-title"><span class="icon icon-sm">history</span>編集履歴</div>
-			    <div class="history-list" id="historyList"></div>
-			  </div>
-			
-			  <button class="btn-secondary" id="resetBtn" style="width:100%">
-			    <span class="icon icon-sm">refresh</span>リセット
-			  </button>
-			</div>
+    <div style="padding:12px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; background:var(--bg-modal-footer);">
+      <button class="btn btn-secondary" style="width:auto;" onclick="closeModal('csvFlowModal')"> 閉じる</button>
     </div>
   </div>
+</div>
+<!-- JSファイルの読み込み -->
+<script src="script.js"></script>
 
-  
-
-  <!-- Help Panel -->
-  <div class="help-panel" id="helpPanel">
-    <div class="help-header">
-      <h2><span class="icon icon-sm">help</span>使い方</h2>
-      <button class="btn-icon" id="closeHelp"><span class="icon">close</span></button>
-    </div>
-    <div class="help-content">
-      <div class="help-section">
-        <h3><span class="icon icon-sm">upload_file</span>画像の読み込み</h3>
-        <ul>
-          <li>ドロップゾーンに画像をドラッグ＆ドロップ</li>
-          <li>クリックしてファイルを選択</li>
-          <li><b>Ctrl+V</b> でクリップボードから貼り付け</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">mouse</span>キャンバス操作モード</h3>
-        <ul>
-          <li><b>ピッカー</b>: クリックで色を取得（ルーペ表示付き）</li>
-          <li><b>トリミング</b>: ドラッグで範囲選択、確定ボタンで切り抜き<br><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:bold">⇧ Shift: 正方形に固定</span></li>
-          <li><b>矩形選択</b>: ドラッグで編集範囲を限定<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
-          <li><b>投げ縄</b>: クリックで頂点追加、3点以上で選択範囲として機能<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
-          <li><b>自動選択</b>: クリックで同色の連続領域を自動選択（許容値で調整）<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
-          <li><b>ハンド</b>: ドラッグで画像を移動</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">edit</span>編集ツール</h3>
-        <ul>
-          <li><b>透過</b>: 指定色を透明に（許容値で範囲調整）</li>
-          <li><b>色置換</b>: 色Aを色Bに置き換え</li>
-          <li><b>塗りつぶし</b>: 透明/不透明部分を塗りつぶし</li>
-          <li><b>モザイク</b>: 選択範囲にモザイク処理</li>
-          <li>選択範囲があれば、その範囲内のみに適用</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">zoom_in</span>ズーム・移動</h3>
-        <ul>
-          <li>スクロールでズームイン/アウト</li>
-          <li>スライダーで10%〜400%の範囲で調整</li>
-          <li>「フィット」ボタンで画面にフィット</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">history</span>履歴・ショートカット</h3>
-        <ul>
-          <li><b>Ctrl+Z</b>: 元に戻す（Undo）</li>
-          <li><b>Ctrl+Shift+Z / Ctrl+Y</b>: やり直し（Redo）</li>
-          <li><b style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px">⌃ Ctrl押下</b>: 選択範囲追加モード（複数選択可能）</li>
-          <li>履歴リストをクリックで任意の状態に復元</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">download</span>出力</h3>
-        <ul>
-          <li><b>PNGダウンロード</b>: 編集結果をPNG形式で保存</li>
-          <li><b>クリップボードにコピー</b>: 編集結果をコピー</li>
-          <li><b>出力サイズ</b>: 幅を指定すると高さは自動調整</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h3><span class="icon icon-sm">settings</span>その他</h3>
-        <ul>
-          <li><b>ダークモード</b>: システム設定に連動、手動切替も可能</li>
-          <li><b>クリアボタン</b>: 編集をリセットして初期画面に戻る</li>
-          <li><b>リセットボタン</b>: 元画像の状態に戻す</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <script>
-  (function() {
-    'use strict';
-    
-    // ===== DOM Elements =====
-    const $ = id => document.getElementById(id);
-    const DOM = {
-      dropzone: $('dropzone'),
-      fileInput: $('fileInput'),
-      editor: $('editor'),
-      sidebar: $('sidebar'),
-      origCvs: $('origCvs'),
-      workCvs: $('workCvs'),
-      origContainer: $('origContainer'),
-      workContainer: $('workContainer'),
-      overlay: $('overlay'),
-      historyList: $('historyList'),
-      
-      helpPanel: $('helpPanel'),
-      origSection: $('origSection'),
-      // Controls
-      tColor: $('tColor'), tTol: $('tTol'), tTolVal: $('tTolVal'), tAll: $('tAll'),
-      rFrom: $('rFrom'), rTo: $('rTo'), rTol: $('rTol'), rTolVal: $('rTolVal'),
-      fColor: $('fColor'), fOnly: $('fOnly'),
-      outW: $('outW'), outH: $('outH'),
-      workZoom: $('workZoom'), workZoomVal: $('workZoomVal'),
-      origZoom: $('origZoom'), origZoomVal: $('origZoomVal'),
-      modeHint: $('modeHint'),
-      // Buttons
-      modePick: $('modePick'), modeCrop: $('modeCrop'), 
-      modeSelect: $('modeSelect'), modeLasso: $('modeLasso'), modeMagic: $('modeMagic'), modeHand: $('modeHand'),
-      mTol: $('mTol'), mTolVal: $('mTolVal'), magicTolWrap: $('magicTolWrap'),
-      cropConfirm: $('cropConfirm'), lassoConfirm: $('lassoConfirm'), lassoClear: $('lassoClear'),
-      toggleOrig: $('toggleOrig')
-    };
-    
-    const origCtx = DOM.origCvs.getContext('2d');
-    const workCtx = DOM.workCvs.getContext('2d');
-
-    // ===== State =====
-    const state = {
-      origImg: null,
-      showBorder: true,
-      history: [],
-      historyIdx: -1,
-      ratio: 1,
-      mode: 'pick',
-      dark: localStorage.getItem('dark') !== null ? localStorage.getItem('dark') === '1' : true,
-      zoom: { orig: 100, work: 100 },
-      pan: { orig: { x: 0, y: 0 }, work: { x: 0, y: 0 } },
-      crop: { start: null, end: null, active: false },
-      selections: [],
-      currentSelection: null,
-      lassoPoints: [],
-      addMode: false,
-      dragging: null
-    };
-
-    // ===== Utilities =====
-    const hex2rgb = hex => {
-      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 0, g: 0, b: 0 };
-    };
-    
-    const colorDist = (data, i, c) => 
-      Math.sqrt((data[i] - c.r) ** 2 + (data[i + 1] - c.g) ** 2 + (data[i + 2] - c.b) ** 2);
-    
-    const pointInPolygon = (px, py, pts) => {
-      let inside = false;
-      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-        const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
-        if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
-    };
-
-    // ===== Theme =====
-    const updateTheme = () => {
-      document.body.classList.toggle('dark', state.dark);
-      $('themeIcon').textContent = state.dark ? 'light_mode' : 'dark_mode';
-      localStorage.setItem('dark', state.dark ? '1' : '0');
-    };
-    updateTheme();
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (localStorage.getItem('dark') === null) {
-        state.dark = e.matches;
-        updateTheme();
-      }
-    });
-    $('themeBtn').onclick = () => { state.dark = !state.dark; updateTheme(); };
-
-    // ===== Help Panel =====
-    // Help Panel
-    $('helpBtn').onclick = () => DOM.helpPanel.classList.toggle('show');
-    $('closeHelp').onclick = () => DOM.helpPanel.classList.remove('show');
-
-    // ===== Original Image Toggle =====
-    let showOrig = false;
-    DOM.toggleOrig.onclick = () => {
-      showOrig = !showOrig;
-      DOM.origSection.classList.toggle('hidden', !showOrig);
-      DOM.toggleOrig.classList.toggle('active', showOrig);
-      DOM.toggleOrig.innerHTML = showOrig 
-        ? '<span class="icon icon-sm">photo_library</span> 元画像を非表示' 
-        : '<span class="icon icon-sm">photo_library</span> 元画像を表示';
-      if (showOrig) setTimeout(fitOrigZoom, 50);
-    };
-
-    // ===== Zoom =====
-    const applyZoom = (cvs, container, zoom, pan, valEl, sliderEl) => {
-      const s = zoom / 100;
-      cvs.style.transform = `scale(${s}) translate(${pan.x / s}px, ${pan.y / s}px)`;
-      valEl.textContent = zoom + '%';
-      sliderEl.value = zoom;
-    };
-    
-    const applyOrigZoom = () => applyZoom(DOM.origCvs, DOM.origContainer, state.zoom.orig, state.pan.orig, DOM.origZoomVal, DOM.origZoom);
-    const applyWorkZoom = () => applyZoom(DOM.workCvs, DOM.workContainer, state.zoom.work, state.pan.work, DOM.workZoomVal, DOM.workZoom);
-    
-    const fitZoom = (cvs, container, zoomKey, panKey) => {
-      const cw = container.clientWidth - 20;
-      const ch = container.clientHeight - 20;
-      state.zoom[zoomKey] = Math.max(10, Math.round(Math.min(cw / cvs.width, ch / cvs.height) * 100));
-      state.pan[panKey] = { x: 0, y: 0 };
-    };
-    
-    const fitOrigZoom = () => { fitZoom(DOM.origCvs, DOM.origContainer, 'orig', 'orig'); applyOrigZoom(); };
-    const fitWorkZoom = () => { fitZoom(DOM.workCvs, DOM.workContainer, 'work', 'work'); applyWorkZoom(); };
-    
-    DOM.origZoom.oninput = () => { state.zoom.orig = +DOM.origZoom.value; applyOrigZoom(); };
-    DOM.workZoom.oninput = () => { state.zoom.work = +DOM.workZoom.value; applyWorkZoom(); };
-    $('origFit').onclick = fitOrigZoom;
-    $('workFit').onclick = fitWorkZoom;
-
-    // ===== Wheel Zoom =====
-    const wheelZoom = (e, container, zoomKey, panKey, applyFn) => {
-      e.preventDefault();
-      const rect = container.getBoundingClientRect();
-      const mx = e.clientX - rect.left - rect.width / 2;
-      const my = e.clientY - rect.top - rect.height / 2;
-      const oldZoom = state.zoom[zoomKey];
-      const delta = e.deltaY < 0 ? 10 : -10;
-      state.zoom[zoomKey] = Math.max(10, Math.min(400, oldZoom + delta));
-      const r = state.zoom[zoomKey] / oldZoom;
-      state.pan[panKey].x = mx - (mx - state.pan[panKey].x) * r;
-      state.pan[panKey].y = my - (my - state.pan[panKey].y) * r;
-      applyFn();
-    };
-    
-    DOM.origContainer.onwheel = e => wheelZoom(e, DOM.origContainer, 'orig', 'orig', applyOrigZoom);
-    DOM.workContainer.onwheel = e => wheelZoom(e, DOM.workContainer, 'work', 'work', applyWorkZoom);
-
-    // ===== Pan (Original) =====
-    let panState = { mouse: null, pan: null };
-    DOM.origContainer.onmousedown = e => {
-      panState.mouse = { x: e.clientX, y: e.clientY };
-      panState.pan = { ...state.pan.orig };
-      state.dragging = 'orig';
-      e.preventDefault();
-    };
-
-    // ===== History =====
-    const saveHistory = (label, detail = '') => {
-      const data = workCtx.getImageData(0, 0, DOM.workCvs.width, DOM.workCvs.height);
-      state.history = state.history.slice(0, state.historyIdx + 1);
-      state.history.push({ data, label, detail, w: DOM.workCvs.width, h: DOM.workCvs.height, time: new Date().toLocaleTimeString() });
-      state.historyIdx = state.history.length - 1;
-      renderHistory();
-    };
-
-    const goToHistory = i => {
-      if (i < 0 || i >= state.history.length) return;
-      state.historyIdx = i;
-      const s = state.history[i];
-      DOM.workCvs.width = s.w;
-      DOM.workCvs.height = s.h;
-      workCtx.putImageData(s.data, 0, 0);
-      state.ratio = s.w / s.h;
-      DOM.outW.value = s.w;
-      DOM.outH.value = s.h;
-      fitWorkZoom();
-      renderHistory();
-    };
-
-    const deleteHistory = i => {
-      if (i === 0 || state.history.length <= 1) return;
-      state.history.splice(i, 1);
-      if (state.historyIdx >= i) state.historyIdx = Math.max(0, state.historyIdx - 1);
-      goToHistory(state.historyIdx);
-    };
-
-    const renderHistory = () => {
-      DOM.historyList.innerHTML = state.history.map((h, i) => `
-        <div class="history-item ${i === state.historyIdx ? 'active' : ''}" data-i="${i}">
-          <span class="history-num">${i + 1}</span>
-          <div class="history-info">
-            <div class="history-label">${h.label}</div>
-            <div class="history-detail">${h.detail} (${h.w}×${h.h}) ${h.time}</div>
-          </div>
-          <button class="history-del" data-i="${i}" ${i === 0 ? 'disabled' : ''}>✕</button>
-        </div>
-      `).join('');
-      
-      DOM.historyList.querySelectorAll('.history-item').forEach(el => {
-        el.onclick = e => { if (!e.target.classList.contains('history-del')) goToHistory(+el.dataset.i); };
-      });
-      DOM.historyList.querySelectorAll('.history-del').forEach(btn => {
-        btn.onclick = e => { e.stopPropagation(); deleteHistory(+btn.dataset.i); };
-      });
-    };
-
-    // ===== File Loading =====
-    const loadFile = file => {
-      if (!file?.type.startsWith('image/')) return;
-      // Extract filename without extension
-      if (file.name) {
-        const baseName = file.name.replace(/\.[^.]+$/, '');
-        $('fileName').value = baseName;
-      }
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => { state.origImg = img; initEditor(img); };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    };
-
-    const initEditor = img => {
-      DOM.origCvs.width = DOM.workCvs.width = img.width;
-      DOM.origCvs.height = DOM.workCvs.height = img.height;
-      origCtx.drawImage(img, 0, 0);
-      workCtx.drawImage(img, 0, 0);
-      
-      state.ratio = img.width / img.height;
-      DOM.outW.value = img.width;
-      DOM.outH.value = img.height;
-      state.history = [];
-      state.historyIdx = -1;
-      state.selections = [];
-      state.currentSelection = null;
-      state.pan.orig = { x: 0, y: 0 };
-      state.pan.work = { x: 0, y: 0 };
-      
-      saveHistory('元画像', '読み込み');
-      DOM.dropzone.classList.remove('fullscreen');
-      DOM.editor.classList.remove('hidden');
-      DOM.sidebar.classList.remove('hidden');
-      $('editorControls').classList.remove('hidden');
-      $('sidebarIntro').classList.add('hidden');
-      $('clearBtn').style.display = 'inline-flex';
-      setTimeout(() => { fitOrigZoom(); fitWorkZoom(); }, 50);
-    };
-
-    // ===== Drop Zone =====
-    DOM.dropzone.ondragover = e => { e.preventDefault(); DOM.dropzone.classList.add('dragover'); };
-    DOM.dropzone.ondragleave = () => DOM.dropzone.classList.remove('dragover');
-    DOM.dropzone.ondrop = e => { e.preventDefault(); DOM.dropzone.classList.remove('dragover'); loadFile(e.dataTransfer.files[0]); };
-    DOM.dropzone.onclick = () => DOM.fileInput.click();
-    DOM.fileInput.onchange = e => loadFile(e.target.files[0]);
-    // ===== Clear Button =====
-    const clearBtn = $('clearBtn');
-    const clearAll = () => {
-      state.origImg = null;
-      state.history = [];
-      state.historyIdx = -1;
-      state.selections = [];
-      state.currentSelection = null;
-      state.lassoPoints = [];
-      DOM.editor.classList.add('hidden');
-      // DOM.sidebar.classList.add('hidden');
-      DOM.origSection.classList.add('hidden');
-      clearBtn.style.display = 'none';
-      DOM.dropzone.classList.add('fullscreen');
-      $('editorControls').classList.add('hidden');
-      $('sidebarIntro').classList.remove('hidden');
-      DOM.fileInput.value = '';
-    };
-    clearBtn.onclick = clearAll;
-    document.onpaste = e => {
-      for (const item of e.clipboardData.items) {
-        if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
-      }
-    };
-
-    // ===== Mode Management =====
-    const modeHints = {
-      pick: '<span class="icon icon-sm">lightbulb</span>クリックで色を取得',
-      crop: '<span class="icon icon-sm">lightbulb</span>ドラッグでトリミング　<b style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px">⇧ Shift: 正方形</b>',
-      select: '<span class="icon icon-sm">lightbulb</span>ドラッグで矩形選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
-      lasso: '<span class="icon icon-sm">lightbulb</span>クリックで頂点追加　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
-      magic: '<span class="icon icon-sm">lightbulb</span>クリックで同色領域を自動選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加</b>',
-      hand: '<span class="icon icon-sm">lightbulb</span>ドラッグで画像を移動'
-    };
-
-    const setMode = m => {
-      state.mode = m;
-      [DOM.modePick, DOM.modeCrop, DOM.modeSelect, DOM.modeLasso, DOM.modeMagic, DOM.modeHand].forEach(btn => btn.classList.remove('active'));
-      ({ pick: DOM.modePick, crop: DOM.modeCrop, select: DOM.modeSelect, lasso: DOM.modeLasso, magic: DOM.modeMagic, hand: DOM.modeHand })[m].classList.add('active');
-      DOM.workContainer.classList.toggle('hand', m === 'hand');
-      DOM.workCvs.className = m;
-      DOM.magicTolWrap.style.display = (m === 'magic') ? 'flex' : 'none';
-      updateModeHint();
-      updateButtons();
-      // Clear all selections when switching modes
-      state.selections = [];
-      state.currentSelection = null;
-      state.lassoPoints = [];
-      DOM.tAll.checked = false;
-      DOM.overlay.innerHTML = '';
-      if (state.historyIdx >= 0) {
-        workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
-      }
-    };
-
-    const updateModeHint = () => {
-      let hint = modeHints[state.mode];
-      if ((state.mode === 'select' || state.mode === 'lasso') && state.addMode) {
-        hint += ' <b style="color:var(--accent)">[追加モード]</b>';
-      }
-      DOM.modeHint.innerHTML = hint;
-    };
-
-    const updateButtons = () => {
-      DOM.lassoConfirm.style.display = (state.mode === 'lasso' && state.addMode && state.lassoPoints.length >= 3) ? 'block' : 'none';
-      const isSelectionMode = state.mode === 'lasso' || state.mode === 'select' || state.mode === 'magic';
-      DOM.lassoClear.style.display = isSelectionMode ? 'block' : 'none';
-      const invertBtn = $('invertSelection');
-      if (invertBtn) invertBtn.style.display = isSelectionMode ? 'block' : 'none';
-      DOM.cropConfirm.style.display = (state.mode === 'crop' && state.crop.start && state.crop.end) ? 'block' : 'none';
-    };
-
-    DOM.modePick.onclick = () => setMode('pick');
-    DOM.modeCrop.onclick = () => setMode('crop');
-    DOM.modeSelect.onclick = () => setMode('select');
-    DOM.modeLasso.onclick = () => setMode('lasso');
-    DOM.modeMagic.onclick = () => setMode('magic');
-    DOM.modeHand.onclick = () => setMode('hand');
-    DOM.mTol.oninput = () => DOM.mTolVal.value = DOM.mTol.value;
-    DOM.mTolVal.oninput = () => { DOM.mTol.value = Math.max(0, Math.min(255, +DOM.mTolVal.value || 0)); };
-    setMode('pick');
-    // ===== Magic Wand (Flood Fill Selection) =====
-    const floodFillSelect = (startX, startY, tolerance) => {
-      if (state.historyIdx < 0) return null;
-      const imgData = state.history[state.historyIdx].data;
-      const w = imgData.width, h = imgData.height;
-      const data = imgData.data;
-      if (startX < 0 || startX >= w || startY < 0 || startY >= h) return null;
-      const startIdx = (startY * w + startX) * 4;
-      const targetR = data[startIdx], targetG = data[startIdx + 1], targetB = data[startIdx + 2], targetA = data[startIdx + 3];
-      const visited = new Uint8Array(w * h);
-      const selected = [];
-      const stack = [[startX, startY]];
-      const colorMatch = (idx) => {
-        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-        const dist = Math.sqrt((r - targetR) ** 2 + (g - targetG) ** 2 + (b - targetB) ** 2 + (a - targetA) ** 2);
-        return dist <= tolerance;
-      };
-      while (stack.length > 0) {
-        const [x, y] = stack.pop();
-        const pixelIdx = y * w + x;
-        if (x < 0 || x >= w || y < 0 || y >= h) continue;
-        if (visited[pixelIdx]) continue;
-        const idx = pixelIdx * 4;
-        if (!colorMatch(idx)) continue;
-        visited[pixelIdx] = 1;
-        selected.push({ x, y });
-        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-      }
-      if (selected.length === 0) return null;
-      // Convert to bounding box selection with pixel mask
-      let minX = w, minY = h, maxX = 0, maxY = 0;
-      selected.forEach(p => {
-        minX = Math.min(minX, p.x);
-        minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x);
-        maxY = Math.max(maxY, p.y);
-      });
-      return {
-        type: 'magic',
-        x: minX, y: minY,
-        w: maxX - minX + 1,
-        h: maxY - minY + 1,
-        pixels: selected,
-        pixelSet: new Set(selected.map(p => p.y * w + p.x))
-      };
-    };
-    // ===== Color Picker Loupe =====
-    const loupe = $('pickerLoupe');
-    const loupeCvs = $('loupeCvs');
-    const loupeCtx = loupeCvs.getContext('2d');
-    const loupeSwatch = $('loupeSwatch');
-    const loupeHex = $('loupeHex');
-    const updateLoupe = (e, imgX, imgY) => {
-      if (state.mode !== 'pick' || state.historyIdx < 0) {
-        loupe.style.display = 'none';
-        return;
-      }
-      const imgData = state.history[state.historyIdx].data;
-      const imgW = imgData.width, imgH = imgData.height;
-      if (imgX < 0 || imgX >= imgW || imgY < 0 || imgY >= imgH) {
-        loupe.style.display = 'none';
-        return;
-      }
-      // Show loupe
-      loupe.style.display = 'block';
-      loupe.style.left = (e.clientX + 20) + 'px';
-      loupe.style.top = (e.clientY - 80) + 'px';
-      // Draw zoomed area (11x11 pixels centered on cursor)
-      loupeCtx.imageSmoothingEnabled = false;
-      loupeCtx.clearRect(0, 0, 60, 60);
-      const radius = 5;
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const px = imgX + dx, py = imgY + dy;
-          if (px >= 0 && px < imgW && py >= 0 && py < imgH) {
-            const idx = (py * imgW + px) * 4;
-            const r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2], a = imgData.data[idx + 3];
-            if (a > 0) {
-              loupeCtx.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
-            } else {
-              loupeCtx.fillStyle = (((dx + radius) + (dy + radius)) % 2 === 0) ? '#ccc' : '#fff';
-            }
-            loupeCtx.fillRect((dx + radius) * 5.45, (dy + radius) * 5.45, 5.45, 5.45);
-          }
-        }
-      }
-      // Get center pixel color
-      const idx = (imgY * imgW + imgX) * 4;
-      const r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2];
-      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
-      loupeSwatch.style.background = hex;
-      loupeHex.textContent = hex.toUpperCase();
-    };
-    const hideLoupe = () => { loupe.style.display = 'none'; };
-    DOM.workContainer.addEventListener('mousemove', e => {
-      if (state.mode === 'pick') {
-        const rect = DOM.workCvs.getBoundingClientRect();
-        const scale = state.zoom.work / 100;
-        const x = Math.floor((e.clientX - rect.left) / scale);
-        const y = Math.floor((e.clientY - rect.top) / scale);
-        updateLoupe(e, x, y);
-      }
-    });
-    DOM.workContainer.addEventListener('mouseleave', hideLoupe);
-
-    // ===== Canvas Drawing =====
-    const redrawCanvas = () => {
-      if (state.historyIdx < 0) return;
-      workCtx.putImageData(state.history[state.historyIdx].data, 0, 0);
-      // Auto-toggle "tAll" checkbox based on selection state
-      const hasSelection = state.selections.length > 0 || state.currentSelection !== null || state.lassoPoints.length >= 3;
-      DOM.tAll.checked = hasSelection;
-      
-      // Draw selections
-      const drawSelection = (sel, hue) => {
-        workCtx.strokeStyle = `hsl(${hue}, 80%, 50%)`;
-        workCtx.fillStyle = `hsla(${hue}, 80%, 50%, 0.15)`;
-        workCtx.lineWidth = 2;
-        workCtx.setLineDash([6, 3]);
-        
-        if (sel.type === 'lasso') {
-          workCtx.beginPath();
-          workCtx.moveTo(sel.points[0].x, sel.points[0].y);
-          sel.points.slice(1).forEach(p => workCtx.lineTo(p.x, p.y));
-          workCtx.closePath();
-          workCtx.fill();
-          workCtx.stroke();
-        } else if (sel.type === 'magic') {
-          // Draw diagonal stripes pattern for magic selection (use pixelSet for performance)
-          const stripeSize = 4;
-          const imgW = DOM.workCvs.width;
-          sel.pixelSet.forEach(idx => {
-            const x = idx % imgW, y = Math.floor(idx / imgW);
-            const isStripe = ((x + y) % (stripeSize * 2)) < stripeSize;
-            workCtx.fillStyle = isStripe ? `hsla(${hue}, 80%, 50%, 0.5)` : `hsla(${hue}, 80%, 70%, 0.25)`;
-            workCtx.fillRect(x, y, 1, 1);
-          });
-        } else {
-          workCtx.fillRect(sel.x, sel.y, sel.w, sel.h);
-          workCtx.strokeRect(sel.x, sel.y, sel.w, sel.h);
-        }
-        workCtx.setLineDash([]);
-      };
-      
-      state.selections.forEach((sel, i) => drawSelection(sel, (i * 60) % 360));
-      if (state.currentSelection) drawSelection(state.currentSelection, 140);
-      
-      // Draw lasso points
-      if (state.lassoPoints.length > 0) {
-        workCtx.strokeStyle = '#ff9900';
-        workCtx.lineWidth = 2;
-        workCtx.setLineDash([6, 3]);
-        workCtx.beginPath();
-        workCtx.moveTo(state.lassoPoints[0].x, state.lassoPoints[0].y);
-        state.lassoPoints.slice(1).forEach(p => workCtx.lineTo(p.x, p.y));
-        if (state.lassoPoints.length > 2) {
-          workCtx.closePath();
-          workCtx.fillStyle = 'rgba(255, 153, 0, 0.15)';
-          workCtx.fill();
-        }
-        workCtx.stroke();
-        workCtx.setLineDash([]);
-        
-        state.lassoPoints.forEach((p, i) => {
-          workCtx.beginPath();
-          workCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-          workCtx.fillStyle = i === 0 ? '#ff5500' : '#ff9900';
-          workCtx.fill();
-        });
-      }
-    };
-
-    const updateOverlay = () => {
-      if (state.mode !== 'lasso' || state.lassoPoints.length === 0) {
-        DOM.overlay.innerHTML = '';
-        return;
-      }
-      
-      const containerRect = DOM.workContainer.getBoundingClientRect();
-      const cvsRect = DOM.workCvs.getBoundingClientRect();
-      const scale = state.zoom.work / 100;
-      const offsetX = cvsRect.left - containerRect.left;
-      const offsetY = cvsRect.top - containerRect.top;
-      
-      const pts = state.lassoPoints.map(p => ({ x: offsetX + p.x * scale, y: offsetY + p.y * scale }));
-      let pathD = `M ${pts[0].x} ${pts[0].y}` + pts.slice(1).map(p => ` L ${p.x} ${p.y}`).join('');
-      if (pts.length >= 3) pathD += ' Z';
-      
-      const circles = pts.map((p, i) => 
-        `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${i === 0 ? '#ff5500' : '#ff9900'}" stroke="#fff" stroke-width="1"/>`
-      ).join('');
-      
-      DOM.overlay.innerHTML = `
-        <path d="${pathD}" fill="${pts.length >= 3 ? 'rgba(255,153,0,0.15)' : 'none'}" stroke="#ff9900" stroke-width="2" stroke-dasharray="6,3" filter="drop-shadow(0 0 2px #000)"/>
-        ${circles}
-      `;
-    };
-
-    // ===== Canvas Interactions =====
-    let workDrag = { active: false, start: null, startPan: null };
-    
-    DOM.workContainer.onmousedown = e => {
-      if ([DOM.lassoClear, DOM.lassoConfirm, DOM.cropConfirm].some(btn => btn.contains(e.target))) return;
-      
-      const rect = DOM.workCvs.getBoundingClientRect();
-      const scale = state.zoom.work / 100;
-      const x = (e.clientX - rect.left) / scale;
-      const y = (e.clientY - rect.top) / scale;
-      
-      if (state.mode === 'hand') {
-        workDrag = { active: true, start: { x: e.clientX, y: e.clientY }, startPan: { ...state.pan.work } };
-        state.dragging = 'work';
-      } else if (state.mode === 'crop' || state.mode === 'select') {
-        state.crop = { start: { x, y }, end: null, active: true, shift: e.shiftKey };
-      }
-      e.preventDefault();
-    };
-
-    document.addEventListener('mousemove', e => {
-      // Pan original
-      if (state.dragging === 'orig' && panState.mouse) {
-        state.pan.orig = {
-          x: panState.pan.x + e.clientX - panState.mouse.x,
-          y: panState.pan.y + e.clientY - panState.mouse.y
-        };
-        applyOrigZoom();
-      }
-      // Pan work
-      if (state.dragging === 'work' && workDrag.active) {
-        state.pan.work = {
-          x: workDrag.startPan.x + e.clientX - workDrag.start.x,
-          y: workDrag.startPan.y + e.clientY - workDrag.start.y
-        };
-        applyWorkZoom();
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      state.dragging = null;
-      panState.mouse = null;
-      workDrag.active = false;
-    });
-
-    DOM.workContainer.onmousemove = e => {
-      if ((state.mode !== 'crop' && state.mode !== 'select') || !state.crop.active) return;
-      
-      const rect = DOM.workCvs.getBoundingClientRect();
-      const scale = state.zoom.work / 100;
-      let end = { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
-      
-      if (e.shiftKey) {
-        const dx = end.x - state.crop.start.x, dy = end.y - state.crop.start.y;
-        const size = Math.max(Math.abs(dx), Math.abs(dy));
-        end = { x: state.crop.start.x + size * Math.sign(dx), y: state.crop.start.y + size * Math.sign(dy) };
-      }
-      state.crop.end = end;
-      
-      // Draw SVG overlay
-      const containerRect = DOM.workContainer.getBoundingClientRect();
-      const cvsRect = DOM.workCvs.getBoundingClientRect();
-      const offsetX = cvsRect.left - containerRect.left;
-      const offsetY = cvsRect.top - containerRect.top;
-      const x1 = offsetX + Math.min(state.crop.start.x, end.x) * scale;
-      const y1 = offsetY + Math.min(state.crop.start.y, end.y) * scale;
-      const w = Math.abs(end.x - state.crop.start.x) * scale;
-      const h = Math.abs(end.y - state.crop.start.y) * scale;
-      const color = state.mode === 'crop' ? '#ef4444' : '#10b981';
-      DOM.overlay.innerHTML = `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="10,5" filter="drop-shadow(0 0 2px rgba(0,0,0,0.5))"/>`;
-    };
-
-    DOM.workContainer.onmouseup = () => {
-      if (!state.crop.active) return;
-      if (!state.crop.end) {
-        state.crop = { start: null, end: null, active: false };
-        DOM.overlay.innerHTML = '';
-        redrawCanvas();
-        return;
-      }
-      
-      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
-      let x1 = Math.max(0, Math.min(imgW, Math.min(state.crop.start.x, state.crop.end.x)));
-      let y1 = Math.max(0, Math.min(imgH, Math.min(state.crop.start.y, state.crop.end.y)));
-      let x2 = Math.max(0, Math.min(imgW, Math.max(state.crop.start.x, state.crop.end.x)));
-      let y2 = Math.max(0, Math.min(imgH, Math.max(state.crop.start.y, state.crop.end.y)));
-      const w = Math.round(x2 - x1), h = Math.round(y2 - y1);
-      
-      if (w <= 10 || h <= 10) {
-        state.crop = { start: null, end: null, active: false };
-        DOM.overlay.innerHTML = '';
-        redrawCanvas();
-        return;
-      }
-      
-      if (state.mode === 'crop') {
-        state.crop.active = false;
-        updateButtons();
-      } else if (state.mode === 'select') {
-        const newSel = { type: 'rect', x: Math.round(x1), y: Math.round(y1), w, h };
-        if (state.addMode) {
-          state.selections.push(newSel);
-          state.currentSelection = null;
-        } else {
-          state.currentSelection = newSel;
-        }
-        state.crop = { start: null, end: null, active: false };
-        DOM.overlay.innerHTML = '';
-        DOM.fOnly.checked = false;
-        redrawCanvas();
-      }
-    };
-
-    DOM.workContainer.onclick = e => {
-      if ([DOM.lassoClear, DOM.lassoConfirm, DOM.cropConfirm].some(btn => btn.contains(e.target))) return;
-      
-      const rect = DOM.workCvs.getBoundingClientRect();
-      const scale = state.zoom.work / 100;
-      const x = Math.floor((e.clientX - rect.left) / scale);
-      const y = Math.floor((e.clientY - rect.top) / scale);
-      
-      if (state.mode === 'pick') {
-        if (x >= 0 && x < DOM.workCvs.width && y >= 0 && y < DOM.workCvs.height) {
-          const p = workCtx.getImageData(x, y, 1, 1).data;
-          const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
-          DOM.tColor.value = hex;
-          DOM.rFrom.value = hex;
-        }
-      } else if (state.mode === 'lasso') {
-        state.lassoPoints.push({ x, y });
-        if (state.lassoPoints.length >= 3 && !state.addMode) {
-          state.currentSelection = { type: 'lasso', points: [...state.lassoPoints] };
-        }
-        DOM.fOnly.checked = false;
-        redrawCanvas();
-        updateOverlay();
-        updateButtons();
-      } else if (state.mode === 'magic') {
-        const tolerance = +DOM.mTol.value; // Use magic wand's own tolerance
-        const selection = floodFillSelect(x, y, tolerance);
-        if (selection) {
-          if (state.addMode) {
-            state.selections.push(selection);
-          } else {
-            state.currentSelection = selection;
-          }
-          // Auto-check "transparent only" for fill tool if selecting transparent area
-          if (state.historyIdx >= 0) {
-            const imgData = state.history[state.historyIdx].data;
-            const startIdx = (y * imgData.width + x) * 4;
-            if (imgData.data[startIdx + 3] === 0) {
-              DOM.fOnly.checked = true;
-            } else {
-              DOM.fOnly.checked = false;
-            }
-          }
-          redrawCanvas();
-        }
-      }
-    };
-
-    // ===== Tool Controls =====
-    DOM.tTol.oninput = () => DOM.tTolVal.value = DOM.tTol.value;
-    DOM.tTolVal.oninput = () => { DOM.tTol.value = Math.max(0, Math.min(255, +DOM.tTolVal.value || 0)); };
-    DOM.rTol.oninput = () => DOM.rTolVal.value = DOM.rTol.value;
-    DOM.rTolVal.oninput = () => { DOM.rTol.value = Math.max(0, Math.min(255, +DOM.rTolVal.value || 0)); };
-    DOM.outW.oninput = () => DOM.outH.value = Math.round((+DOM.outW.value || 1) / state.ratio);
-
-    // ===== Selection Check =====
-    const inSelection = (px, py) => {
-      const allSels = state.currentSelection ? [...state.selections, state.currentSelection] : state.selections;
-      if (allSels.length === 0) return true;
-      const imgW = DOM.workCvs.width;
-      return allSels.some(sel => {
-        if (sel.type === 'lasso') return pointInPolygon(px, py, sel.points);
-        if (sel.type === 'magic') return sel.pixelSet.has(py * imgW + px);
-        return px >= sel.x && px < sel.x + sel.w && py >= sel.y && py < sel.y + sel.h;
-      });
-    };
-
-    // ===== Apply Tools =====
-    $('applyT').onclick = () => {
-      const c = hex2rgb(DOM.tColor.value), tol = +DOM.tTol.value, all = DOM.tAll.checked;
-      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
-      let cnt = 0;
-      for (let i = 0; i < img.data.length; i += 4) {
-        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
-        if (inSelection(px, py) && (all || colorDist(img.data, i, c) <= tol)) {
-          img.data[i + 3] = 0;
-          cnt++;
-        }
-      }
-      workCtx.putImageData(img, 0, 0);
-      const selInfo = state.selections.length + (state.currentSelection ? 1 : 0);
-      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
-      saveHistory('透過', `${all ? '全体' : DOM.tColor.value + ' 許容' + tol} → ${cnt}px${selInfo > 0 ? ` [${selInfo}選択]` : ''}`);
-    };
-
-    $('applyR').onclick = () => {
-      const fc = hex2rgb(DOM.rFrom.value), tc = hex2rgb(DOM.rTo.value), tol = +DOM.rTol.value;
-      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
-      let cnt = 0;
-      for (let i = 0; i < img.data.length; i += 4) {
-        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
-        if (inSelection(px, py) && img.data[i + 3] > 0 && colorDist(img.data, i, fc) <= tol) {
-          img.data[i] = tc.r; img.data[i + 1] = tc.g; img.data[i + 2] = tc.b;
-          cnt++;
-        }
-      }
-      workCtx.putImageData(img, 0, 0);
-      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
-      saveHistory('色置換', `${DOM.rFrom.value}→${DOM.rTo.value} → ${cnt}px`);
-    };
-
-    $('applyF').onclick = () => {
-      const c = hex2rgb(DOM.fColor.value), only = DOM.fOnly.checked;
-      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), DOM.workCvs.width, DOM.workCvs.height);
-      let cnt = 0;
-      for (let i = 0; i < img.data.length; i += 4) {
-        const px = (i / 4) % DOM.workCvs.width, py = Math.floor((i / 4) / DOM.workCvs.width);
-        if (inSelection(px, py) && (only ? img.data[i + 3] === 0 : img.data[i + 3] > 0)) {
-          img.data[i] = c.r; img.data[i + 1] = c.g; img.data[i + 2] = c.b;
-          if (only) img.data[i + 3] = 255;
-          cnt++;
-        }
-      }
-      workCtx.putImageData(img, 0, 0);
-      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
-      saveHistory('塗りつぶし', `${DOM.fColor.value} ${only ? '透明のみ' : '不透明'} → ${cnt}px`);
-    };
-
-    // ===== Crop Confirm =====
-    DOM.cropConfirm.onclick = e => {
-      e.stopPropagation();
-      if (!state.crop.start || !state.crop.end) return;
-      
-      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
-      let x1 = Math.max(0, Math.min(imgW, Math.min(state.crop.start.x, state.crop.end.x)));
-      let y1 = Math.max(0, Math.min(imgH, Math.min(state.crop.start.y, state.crop.end.y)));
-      let x2 = Math.max(0, Math.min(imgW, Math.max(state.crop.start.x, state.crop.end.x)));
-      let y2 = Math.max(0, Math.min(imgH, Math.max(state.crop.start.y, state.crop.end.y)));
-      const x = Math.round(x1), y = Math.round(y1), w = Math.round(x2 - x1), h = Math.round(y2 - y1);
-      
-      if (w <= 0 || h <= 0) return;
-      
-      const srcData = state.history[state.historyIdx].data;
-      const srcW = state.history[state.historyIdx].w;
-      const newData = new ImageData(w, h);
-      
-      for (let py = 0; py < h; py++) {
-        for (let px = 0; px < w; px++) {
-          const srcIdx = ((y + py) * srcW + (x + px)) * 4;
-          const dstIdx = (py * w + px) * 4;
-          newData.data[dstIdx] = srcData.data[srcIdx];
-          newData.data[dstIdx + 1] = srcData.data[srcIdx + 1];
-          newData.data[dstIdx + 2] = srcData.data[srcIdx + 2];
-          newData.data[dstIdx + 3] = srcData.data[srcIdx + 3];
-        }
-      }
-      
-      DOM.workCvs.width = w;
-      DOM.workCvs.height = h;
-      workCtx.putImageData(newData, 0, 0);
-      state.ratio = w / h;
-      DOM.outW.value = w;
-      DOM.outH.value = h;
-      state.pan.work = { x: 0, y: 0 };
-      fitWorkZoom();
-      saveHistory('トリミング', `(${x},${y})→${w}×${h}`);
-      
-      state.crop = { start: null, end: null, active: false };
-      DOM.overlay.innerHTML = '';
-      updateButtons();
-    };
-
-    // ===== Lasso Buttons =====
-    DOM.lassoConfirm.onclick = e => {
-      e.stopPropagation();
-      if (state.lassoPoints.length >= 3) {
-        state.selections.push({ type: 'lasso', points: [...state.lassoPoints] });
-        state.currentSelection = null;
-        state.lassoPoints = [];
-        updateOverlay();
-        updateButtons();
-        redrawCanvas();
-      }
-    };
-
-    DOM.lassoClear.onclick = () => {
-      state.selections = [];
-      state.currentSelection = null;
-      state.lassoPoints = [];
-      redrawCanvas();
-      updateOverlay();
-      updateButtons();
-    };
-    // ===== Invert Selection =====
-    $('invertSelection').onclick = () => {
-      const allSels = state.currentSelection ? [...state.selections, state.currentSelection] : state.selections;
-      if (allSels.length === 0) return;
-      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
-      // Build inverted pixelSet directly (without pixels array for performance)
-      const pixelSet = new Set();
-      for (let i = 0; i < imgW * imgH; i++) {
-        const x = i % imgW, y = Math.floor(i / imgW);
-        if (!inSelection(x, y)) pixelSet.add(i);
-      }
-      state.selections = [];
-      state.currentSelection = {
-        type: 'magic',
-        x: 0, y: 0, w: imgW, h: imgH,
-        pixels: null, // Skip pixels array - use pixelSet only
-        pixelSet: pixelSet
-      };
-      state.lassoPoints = [];
-      redrawCanvas();
-      updateOverlay();
-    };
-
-    // ===== Keyboard Shortcuts =====
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Control' && !state.addMode) {
-        state.addMode = true;
-        if (state.currentSelection) {
-          state.selections.push(state.currentSelection);
-          state.currentSelection = null;
-          redrawCanvas();
-        }
-        updateButtons();
-        updateModeHint();
-      }
-      
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
-        e.preventDefault();
-        if (e.shiftKey) {
-          if (state.historyIdx < state.history.length - 1) goToHistory(state.historyIdx + 1);
-        } else {
-          if (state.historyIdx > 0) goToHistory(state.historyIdx - 1);
-        }
-      }
-      
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault();
-        if (state.historyIdx < state.history.length - 1) goToHistory(state.historyIdx + 1);
-      }
-    });
-
-    document.addEventListener('keyup', e => {
-      if (e.key === 'Control') {
-        state.addMode = false;
-        updateButtons();
-        updateModeHint();
-      }
-    });
-
-    // ===== Reset & Export =====
-    $('resetBtn').onclick = () => {
-      if (state.origImg) {
-        // Reset tool settings to defaults
-        DOM.tColor.value = '#ffffff';
-        DOM.tTol.value = 30; DOM.tTolVal.value = '30';
-        DOM.tAll.checked = false;
-        DOM.rFrom.value = '#000000';
-        DOM.rTo.value = '#ff0000';
-        DOM.rTol.value = 30; DOM.rTolVal.value = '30';
-        DOM.fColor.value = '#ff0000';
-        DOM.fOnly.checked = false;
-        DOM.mTol.value = 30; DOM.mTolVal.value = '30';
-        initEditor(state.origImg);
-      }
-    };
-    // Tolerance slider double-click to reset to default
-    DOM.tTol.ondblclick = () => { DOM.tTol.value = 30; DOM.tTolVal.value = '30'; };
-    DOM.rTol.ondblclick = () => { DOM.rTol.value = 30; DOM.rTolVal.value = '30'; };
-    DOM.mTol.ondblclick = () => { DOM.mTol.value = 30; DOM.mTolVal.value = '30'; };
-    // ===== Mosaic Tool =====
-    const mosSize = $('mosSize');
-    const mosSizeVal = $('mosSizeVal');
-    mosSize.oninput = () => mosSizeVal.value = mosSize.value;
-    mosSizeVal.oninput = () => { mosSize.value = Math.max(2, Math.min(50, +mosSizeVal.value || 2)); };
-    mosSize.ondblclick = () => { mosSize.value = 10; mosSizeVal.value = '10'; updateMosaicPreset(10); };
-    // Mosaic preset buttons
-    const mosaicPresets = document.querySelectorAll('.mosaic-preset');
-    const updateMosaicPreset = (size) => {
-      mosaicPresets.forEach(btn => {
-        btn.classList.toggle('active', +btn.dataset.size === size);
-      });
-    };
-    mosaicPresets.forEach(btn => {
-      btn.onclick = () => {
-        const size = +btn.dataset.size;
-        mosSize.value = size;
-        mosSizeVal.value = size;
-        updateMosaicPreset(size);
-      };
-    });
-    mosSize.addEventListener('input', () => updateMosaicPreset(+mosSize.value));
-    mosSizeVal.addEventListener('input', () => updateMosaicPreset(+mosSizeVal.value));
-    $('applyMos').onclick = () => {
-      const size = +mosSize.value;
-      const imgW = DOM.workCvs.width, imgH = DOM.workCvs.height;
-      const img = new ImageData(new Uint8ClampedArray(state.history[state.historyIdx].data.data), imgW, imgH);
-      let cnt = 0;
-      // Process mosaic blocks
-      for (let by = 0; by < imgH; by += size) {
-        for (let bx = 0; bx < imgW; bx += size) {
-          // Check if any pixel in this block is in selection
-          let blockInSelection = false;
-          const blockPixels = [];
-          for (let py = by; py < Math.min(by + size, imgH); py++) {
-            for (let px = bx; px < Math.min(bx + size, imgW); px++) {
-              if (inSelection(px, py)) {
-                blockInSelection = true;
-              }
-              blockPixels.push({ x: px, y: py });
-            }
-          }
-          if (!blockInSelection) continue;
-          // Calculate average color for this block (only from selected pixels)
-          let r = 0, g = 0, b = 0, a = 0, count = 0;
-          for (const p of blockPixels) {
-            if (inSelection(p.x, p.y)) {
-              const idx = (p.y * imgW + p.x) * 4;
-              r += img.data[idx];
-              g += img.data[idx + 1];
-              b += img.data[idx + 2];
-              a += img.data[idx + 3];
-              count++;
-            }
-          }
-          if (count === 0) continue;
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          a = Math.round(a / count);
-          // Apply average color to all selected pixels in block
-          for (const p of blockPixels) {
-            if (inSelection(p.x, p.y)) {
-              const idx = (p.y * imgW + p.x) * 4;
-              img.data[idx] = r;
-              img.data[idx + 1] = g;
-              img.data[idx + 2] = b;
-              img.data[idx + 3] = a;
-              cnt++;
-            }
-          }
-        }
-      }
-      workCtx.putImageData(img, 0, 0);
-      const selInfo = state.selections.length + (state.currentSelection ? 1 : 0);
-      state.selections = []; state.currentSelection = null; state.lassoPoints = [];
-      saveHistory('モザイク', `${size}px → ${cnt}px${selInfo > 0 ? ` [${selInfo}選択]` : ''}`);
-    };
-    // ===== Border Toggle =====
-    const toggleBorderBtn = $('toggleBorder');
-    const updateBorder = () => {
-      DOM.workCvs.style.boxShadow = state.showBorder ? '0 0 0 2px rgba(100, 100, 100, 0.8)' : 'none';
-      toggleBorderBtn.classList.toggle('active', state.showBorder);
-    };
-    toggleBorderBtn.onclick = () => {
-      state.showBorder = !state.showBorder;
-      updateBorder();
-    };
-    updateBorder();
-
-    $('copyBtn').onclick = async () => {
-      const w = +DOM.outW.value, h = +DOM.outH.value;
-      const cvs = document.createElement('canvas');
-      cvs.width = w; cvs.height = h;
-      cvs.getContext('2d').drawImage(DOM.workCvs, 0, 0, w, h);
-      try {
-        const blob = await new Promise(resolve => cvs.toBlob(resolve, 'image/png'));
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        const btn = $('copyBtn');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<span class="icon icon-sm">check</span>コピーしました！';
-        setTimeout(() => btn.innerHTML = orig, 2000);
-      } catch (err) {
-        alert('クリップボードへのコピーに失敗しました');
-      }
-    };
-
-    $('downloadBtn').onclick = () => {
-      const w = +DOM.outW.value, h = +DOM.outH.value;
-      const cvs = document.createElement('canvas');
-      cvs.width = w; cvs.height = h;
-      cvs.getContext('2d').drawImage(DOM.workCvs, 0, 0, w, h);
-      const a = document.createElement('a');
-      const fileName = $('fileName').value.trim() || 'edited';
-      a.download = fileName + '.png';
-      a.href = cvs.toDataURL('image/png');
-      a.click();
-    };
-  })();
-  </script>
+<!-- OpenCV.js: メインスクリプトの後ろで読み込む -->
+<script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="window.onOpenCvReady && window.onOpenCvReady()"></script>
 </body>
 </html>
