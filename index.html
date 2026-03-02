@@ -659,6 +659,7 @@
           <li><b>投げ縄</b>: クリックで頂点追加、3点以上で選択範囲として機能<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
           <li><b>自動選択</b>: クリックで同色の連続領域を自動選択（許容値で調整）<br><span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:bold">⌃ Ctrl: 追加モード（複数選択）</span></li>
           <li><b>ハンド</b>: ドラッグで画像を移動</li>
+          <li><b>右クリックドラッグ</b>: どのモードでも画像を移動（ハンドと同じ）</li>
         </ul>
       </div>
       <div class="help-section">
@@ -953,6 +954,7 @@
       
       saveHistory('元画像', '読み込み');
       DOM.dropzone.classList.remove('fullscreen');
+      DOM.dropzone.classList.add('hidden');
       DOM.editor.classList.remove('hidden');
       DOM.sidebar.classList.remove('hidden');
       $('editorControls').classList.remove('hidden');
@@ -980,6 +982,7 @@
       // DOM.sidebar.classList.add('hidden');
       DOM.origSection.classList.add('hidden');
       clearBtn.style.display = 'none';
+      DOM.dropzone.classList.remove('hidden');
       DOM.dropzone.classList.add('fullscreen');
       $('editorControls').classList.add('hidden');
       $('sidebarIntro').classList.remove('hidden');
@@ -999,7 +1002,7 @@
       select: '<span class="icon icon-sm">lightbulb</span>ドラッグで矩形選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
       lasso: '<span class="icon icon-sm">lightbulb</span>クリックで頂点追加　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加モード</b>',
       magic: '<span class="icon icon-sm">lightbulb</span>クリックで同色領域を自動選択　<b style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px">⌃ Ctrl: 追加</b>',
-      hand: '<span class="icon icon-sm">lightbulb</span>ドラッグで画像を移動'
+      hand: '<span class="icon icon-sm">lightbulb</span>ドラッグで画像を移動　<b style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px">右クリックドラッグ: 全モード共通</b>'
     };
 
     const setMode = m => {
@@ -1247,6 +1250,9 @@
     };
 
     // ===== Canvas Interactions =====
+    // Right-click drag = pan (hand mode) in any mode
+    DOM.workContainer.addEventListener('contextmenu', e => e.preventDefault());
+    DOM.origContainer.addEventListener('contextmenu', e => e.preventDefault());
     let workDrag = { active: false, start: null, startPan: null };
     
     DOM.workContainer.onmousedown = e => {
@@ -1257,6 +1263,14 @@
       const x = (e.clientX - rect.left) / scale;
       const y = (e.clientY - rect.top) / scale;
       
+      // Right-click drag → pan regardless of current mode
+      if (e.button === 2) {
+        workDrag = { active: true, start: { x: e.clientX, y: e.clientY }, startPan: { ...state.pan.work } };
+        state.dragging = 'work';
+        DOM.workContainer.style.cursor = 'grabbing';
+        e.preventDefault();
+        return;
+      }
       if (state.mode === 'hand') {
         workDrag = { active: true, start: { x: e.clientX, y: e.clientY }, startPan: { ...state.pan.work } };
         state.dragging = 'work';
@@ -1286,6 +1300,7 @@
     });
 
     document.addEventListener('mouseup', () => {
+      if (workDrag.active) DOM.workContainer.style.cursor = '';
       state.dragging = null;
       panState.mouse = null;
       workDrag.active = false;
