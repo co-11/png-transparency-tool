@@ -614,12 +614,18 @@
 			
 			  <div class="sidebar-section">
 			    <div class="sidebar-title"><span class="icon icon-sm">straighten</span>出力サイズ</div>
+    <div class="form-row" style="gap:4px;margin-bottom:8px">
+      <button class="btn-secondary size-preset" data-width="1920" style="padding:4px 10px;font-size:11px">大</button>
+      <button class="btn-secondary size-preset" data-width="640" style="padding:4px 10px;font-size:11px">中</button>
+      <button class="btn-secondary size-preset" data-width="128" style="padding:4px 10px;font-size:11px">小</button>
+      <button class="btn-ghost" id="sizeReset" style="padding:4px 10px;font-size:11px;margin-left:auto"><span class="icon icon-sm">restart_alt</span>元に戻す</button>
+    </div>
 			    <div class="form-row">
 			      <input type="number" id="outW" min="1" max="4096">
 			      <span style="color:var(--text-muted)">×</span>
-			      <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
-			    </div>
-			  </div>
+			            <input type="text" id="outH" readonly class="output-height-readonly" style="width:50px">
+		    </div>
+		  </div>
 			
 			  <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
 			    <div class="sidebar-title"><span class="icon icon-sm">history</span>編集履歴</div>
@@ -1427,7 +1433,25 @@
     DOM.tTolVal.oninput = () => { DOM.tTol.value = Math.max(0, Math.min(255, +DOM.tTolVal.value || 0)); };
     DOM.rTol.oninput = () => DOM.rTolVal.value = DOM.rTol.value;
     DOM.rTolVal.oninput = () => { DOM.rTol.value = Math.max(0, Math.min(255, +DOM.rTolVal.value || 0)); };
-    DOM.outW.oninput = () => DOM.outH.value = Math.round((+DOM.outW.value || 1) / state.ratio);
+    DOM.outW.oninput = () => {
+      DOM.outH.value = Math.round((+DOM.outW.value || 1) / state.ratio);
+      const w = +DOM.outW.value;
+      document.querySelectorAll('.size-preset').forEach(btn => btn.classList.toggle('active', +btn.dataset.width === w));
+    };
+    // ===== Output Size Presets =====
+    document.querySelectorAll('.size-preset').forEach(btn => {
+      btn.onclick = () => {
+        const w = +btn.dataset.width;
+        DOM.outW.value = w;
+        DOM.outH.value = Math.round(w / state.ratio);
+        document.querySelectorAll('.size-preset').forEach(b => b.classList.toggle('active', +b.dataset.width === w));
+      };
+    });
+    $('sizeReset').onclick = () => {
+      DOM.outW.value = DOM.workCvs.width;
+      DOM.outH.value = DOM.workCvs.height;
+      document.querySelectorAll('.size-preset').forEach(b => b.classList.remove('active'));
+    };
 
     // ===== Selection Check =====
     const inSelection = (px, py) => {
@@ -1758,4 +1782,3 @@
   </script>
 </body>
 </html>
-
